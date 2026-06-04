@@ -190,14 +190,17 @@ public abstract partial class SharedStackSystem : EntitySystem
 
         var user = args.User; // Can't pass ref events into verbs
 
-        AlternativeVerb halve = new()
+        if (ent.Comp.HalfOnAltInteract)
         {
-            Text = Loc.GetString("comp-stack-split-halve"),
-            Category = VerbCategory.Split,
-            Act = () => UserSplit(ent, user, ent.Comp.Count / 2),
-            Priority = 1
-        };
-        args.Verbs.Add(halve);
+            AlternativeVerb halve = new()
+            {
+                Text = Loc.GetString("comp-stack-split-halve"),
+                Category = VerbCategory.Split,
+                Act = () => UserSplit(ent, user, ent.Comp.Count / 2),
+                Priority = 1
+            };
+            args.Verbs.Add(halve);
+        }
 
         var priority = 0;
         foreach (var amount in DefaultSplitAmounts)

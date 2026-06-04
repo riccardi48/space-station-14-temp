@@ -1,0 +1,42 @@
+- type: entity
+  parent: BaseItem
+  id: BaseCards
+  name: cards
+  components:
+  - type: Cards
+    cards: []
+  - type: Stack
+    stackType: CardsStack
+    baseLayer: base
+    halfOnAltInteract: false
+    layerStates:
+    - brass
+    - brass_2
+    - brass_3
+    count: 1
+  - type: Sprite
+    sprite: Objects/Materials/Sheets/metal.rsi
+    state: brass
+    layers:
+    - state: brass
+      map: ["base"]
+  - type: Item
+    sprite: Objects/Materials/Sheets/other.rsi
+  - type: InteractionOutline
+
+- type: entity
+  parent: BaseCards
+  id: cardss
+  name: cardss
+  suffix: cardssss
+  components:
+    - type: Cards
+      cards: [1,2,3,4,5,6,7,8,9,10]
+    - type: Stack
+      count: 9
+
+- type: stack
+  id: CardsStack
+  maxCount: 100
+  spawn: BaseCards
+  icon: { sprite: /Textures/Objects/Materials/Sheets/metal.rsi, state: brass }

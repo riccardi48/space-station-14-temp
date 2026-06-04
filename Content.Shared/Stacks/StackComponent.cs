@@ -85,6 +85,10 @@ public sealed partial class StackComponent : Component
     /// </summary>
     [DataField]
     public StackLayerFunction LayerFunction = StackLayerFunction.None;
+
+    [DataField]
+    public bool HalfOnAltInteract = true;
+
 }
 
 [Serializable, NetSerializable]
