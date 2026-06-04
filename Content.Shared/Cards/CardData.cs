@@ -3,14 +3,9 @@ using Robust.Shared.Serialization;
 namespace Content.Shared.Cards
 {
     [DataDefinition, NetSerializable, Serializable]
-    public sealed partial class CardData
+    public partial struct CardData
     {
         [DataField]
-        public int CardId;
-
-        CardData(int cardId)
-        {
-            CardId = cardId;
-        }
+        public int CardId { get; private set; }
     }
 }

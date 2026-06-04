@@ -197,7 +197,7 @@ public abstract partial class SharedStackSystem : EntitySystem
                 Text = Loc.GetString("comp-stack-split-halve"),
                 Category = VerbCategory.Split,
                 Act = () => UserSplit(ent, user, ent.Comp.Count / 2),
-                Priority = 1
+                Priority = 1,
             };
             args.Verbs.Add(halve);
         }
@@ -214,7 +214,7 @@ public abstract partial class SharedStackSystem : EntitySystem
                 Category = VerbCategory.Split,
                 Act = () => UserSplit(ent, user, amount),
                 // we want to sort by size, not alphabetically by the verb text.
-                Priority = priority
+                Priority = priority,
             };
 
             priority--;

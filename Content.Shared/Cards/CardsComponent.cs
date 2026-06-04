@@ -7,4 +7,10 @@ public sealed partial class CardsComponent : Component
 {
     [DataField("cards", required: true), AutoNetworkedField]
     public List<int> Cards = new();
+
+    [DataField, AutoNetworkedField]
+    public bool Flipped = false;
+
+    [DataField, AutoNetworkedField]
+    public bool Fanned = false;
 }
