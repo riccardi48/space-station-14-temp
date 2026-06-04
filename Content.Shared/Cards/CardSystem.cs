@@ -34,7 +34,6 @@ public sealed partial class SharedCardSystem : EntitySystem
             return;
 
         var delta = splitStackComp.Count;
-        Log.Error($"{delta}");
         MoveCards(splitComp, ent.Comp, delta);
         Dirty(ent.Owner, ent.Comp);
         Dirty(args.NewId, splitComp);

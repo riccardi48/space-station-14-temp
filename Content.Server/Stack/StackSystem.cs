@@ -294,6 +294,11 @@ namespace Content.Server.Stack
                 return;
             }
 
+            if (Hands.TryGetActiveItem(user.Owner, out var recipient)
+                && TryComp<StackComponent>(recipient, out var recipientStack)
+                && TryMergeStacks((stack.Owner, stack.Comp), (recipient.Value, recipientStack), out var transferred, amount: amount))
+                return;
+
             if (Split(stack.AsNullable(), amount, user.Comp.Coordinates) is not { } split)
                 return;
 

@@ -185,7 +185,7 @@ public abstract partial class SharedStackSystem : EntitySystem
 
     private void OnStackAlternativeInteract(Entity<StackComponent> ent, ref GetVerbsEvent<AlternativeVerb> args)
     {
-        if (!args.CanAccess || !args.CanInteract || args.Hands == null || ent.Comp.Count == 1)
+        if (!args.CanAccess || !args.CanInteract || args.Hands == null)
             return;
 
         var user = args.User; // Can't pass ref events into verbs
@@ -205,7 +205,7 @@ public abstract partial class SharedStackSystem : EntitySystem
         var priority = 0;
         foreach (var amount in DefaultSplitAmounts)
         {
-            if (amount >= ent.Comp.Count)
+            if (amount > ent.Comp.Count)
                 continue;
 
             AlternativeVerb verb = new()
