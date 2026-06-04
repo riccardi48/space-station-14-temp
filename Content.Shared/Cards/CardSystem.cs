@@ -6,16 +6,14 @@ using Content.Shared.Verbs;
 
 namespace Content.Shared.Cards;
 
-public sealed partial class SharedCardSystem : EntitySystem
+public abstract partial class SharedCardSystem : EntitySystem
 {
     public override void Initialize()
     {
         base.Initialize();
         SubscribeLocalEvent<CardsComponent, MergeEvent>(OnMergeEvent);
         SubscribeLocalEvent<CardsComponent, StackSplitEvent>(OnSplitEvent);
-        SubscribeLocalEvent<CardsComponent, GetVerbsEvent<ActivationVerb>>(OnCardsActivationInteract);
         SubscribeLocalEvent<CardsComponent, GetVerbsEvent<AlternativeVerb>>(OnCardsAlternativeInteract);
-        SubscribeLocalEvent<CardsComponent, GetVerbsEvent<InteractionVerb>>(OnCardsInteract);
 
         SubscribeLocalEvent<CardsComponent, ActivateInWorldEvent>(OnCardsActivate);
         SubscribeLocalEvent<CardsComponent, UseInHandEvent>(OnCardsUse);
@@ -28,11 +26,15 @@ public sealed partial class SharedCardSystem : EntitySystem
 
         if (args.Delta <= 0)
             return;
+        if (args.TargetDelta != null)
+            PlayCardDrawAnimation(ent, (args.Mergee, mergeeComp), args.Delta);
         MoveCards(ent.Comp, mergeeComp, args.Delta);
 
         Dirty(ent.Owner, ent.Comp);
         Dirty(args.Mergee, mergeeComp);
     }
+
+    protected virtual void PlayCardDrawAnimation(Entity<CardsComponent> merger, Entity<CardsComponent> mergee, int delta){}
 
     private void OnSplitEvent(Entity<CardsComponent> ent, ref StackSplitEvent args)
     {
@@ -43,6 +45,7 @@ public sealed partial class SharedCardSystem : EntitySystem
             return;
 
         var delta = splitStackComp.Count;
+        PlayCardDrawAnimation((args.NewId, splitComp), ent, delta);
         MoveCards(splitComp, ent.Comp, delta);
         splitComp.Flipped = ent.Comp.Flipped;
         splitComp.Fanned = ent.Comp.Fanned;
@@ -52,13 +55,20 @@ public sealed partial class SharedCardSystem : EntitySystem
 
     private void MoveCards(CardsComponent comp1, CardsComponent comp2, int delta)
     {
-        var selected = comp2.Cards.Take(delta).ToList();
+        var selected = MovedCards(comp2, delta);
         selected.ForEach(item => comp2.Cards.Remove(item));
         comp1.Cards = selected.Concat(comp1.Cards).ToList();
 
         var logString = "movedCards ";
         selected.ForEach(item => logString += $"{item}");
         Log.Info(logString);
+    }
+
+    protected List<int> MovedCards(CardsComponent comp, int delta)
+    {
+        if (comp.Flipped)
+            return comp.Cards.Skip(Math.Max(0, comp.Cards.Count() - delta)).ToList();
+        return comp.Cards.Take(delta).ToList();
     }
 
     /// <summary>
@@ -90,40 +100,29 @@ public sealed partial class SharedCardSystem : EntitySystem
         }
     }
 
-    private void OnCardsInteract(Entity<CardsComponent> ent, ref GetVerbsEvent<InteractionVerb> args)
-    {
-        if (!args.CanAccess || !args.CanInteract || !args.CanComplexInteract || args.Hands == null)
-            return;
-
-        InteractionVerb flip = new()
-        {
-            Text = Loc.GetString("comp-cards-flip"),
-            Act = () => TryFlipCards(ent),
-            CloseMenu = false,
-            Priority = -1,
-        };
-        args.Verbs.Add(flip);
-    }
-
-    private void OnCardsActivationInteract(Entity<CardsComponent> ent, ref GetVerbsEvent<ActivationVerb> args)
-    {
-        if (!args.CanAccess || !args.CanInteract || !args.CanComplexInteract || args.Hands == null)
-            return;
-
-        ActivationVerb shuffle = new()
-        {
-            Text = Loc.GetString("comp-cards-shuffle"),
-            Act = () => TryShuffleCards(ent),
-            CloseMenu = false,
-        };
-
-        args.Verbs.Add(shuffle);
-    }
-
     private void OnCardsAlternativeInteract(Entity<CardsComponent> ent, ref GetVerbsEvent<AlternativeVerb> args)
     {
         if (!args.CanAccess || !args.CanInteract || !args.CanComplexInteract || args.Hands == null)
             return;
+
+        AlternativeVerb flip = new()
+        {
+            Text = Loc.GetString("comp-cards-flip"),
+            Act = () => TryFlipCards(ent),
+            Priority = -98,
+        };
+        args.Verbs.Add(flip);
+
+
+        AlternativeVerb shuffle = new()
+        {
+            Text = Loc.GetString("comp-cards-shuffle"),
+            Act = () => TryShuffleCards(ent),
+            Priority = -99,
+            CloseMenu = false,
+        };
+
+        args.Verbs.Add(shuffle);
 
         if (ent.Comp.Flipped)
         {
@@ -132,7 +131,6 @@ public sealed partial class SharedCardSystem : EntitySystem
                 Text = Loc.GetString("comp-cards-fan"),
                 Act = () => TryFanCards(ent),
                 Priority = -100,
-                CloseMenu = true,
             };
 
             args.Verbs.Add(fan);

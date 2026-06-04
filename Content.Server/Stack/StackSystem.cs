@@ -289,10 +289,7 @@ namespace Content.Server.Stack
                 return;
 
             if (amount <= 0)
-            {
-                Popup.PopupCursor(Loc.GetString("comp-stack-split-too-small"), user.Owner, PopupType.Medium);
                 return;
-            }
 
             if (Hands.TryGetActiveItem(user.Owner, out var recipient)
                 && TryComp<StackComponent>(recipient, out var recipientStack)

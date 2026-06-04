@@ -232,7 +232,16 @@ public abstract partial class SharedStackSystem : EntitySystem
     /// </remarks>
     protected virtual void UserSplit(Entity<StackComponent> stack, Entity<TransformComponent?> user, int amount)
     {
+        if (amount <= 0)
+        {
+            Popup.PopupCursor(Loc.GetString("comp-stack-split-too-small"), user.Owner, PopupType.Medium);
+            return;
+        }
 
+        if (Hands.TryGetActiveItem(user.Owner, out var recipient)
+            && TryComp<StackComponent>(recipient, out var recipientStack)
+            && TryMergeStacks((stack.Owner, stack.Comp), (recipient.Value, recipientStack), out var transferred, amount: amount))
+            return;
     }
 }
 
