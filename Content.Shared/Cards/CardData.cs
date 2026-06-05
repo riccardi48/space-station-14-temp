@@ -1,3 +1,4 @@
+using Robust.Shared.Prototypes;
 using Robust.Shared.Serialization;
 
 namespace Content.Shared.Cards
@@ -6,6 +7,11 @@ namespace Content.Shared.Cards
     public partial struct CardData
     {
         [DataField]
-        public int CardId { get; private set; }
+        public ProtoId<CardPrototype> CardId { get; private set; }
+
+        public CardData(ProtoId<CardPrototype> cardId)
+        {
+            CardId = cardId;
+        }
     }
 }

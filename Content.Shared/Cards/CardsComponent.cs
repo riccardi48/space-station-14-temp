@@ -6,7 +6,7 @@ namespace Content.Shared.Cards;
 public sealed partial class CardsComponent : Component
 {
     [DataField("cards", required: true), AutoNetworkedField]
-    public List<int> Cards = new();
+    public List<CardData> Cards = new();
 
     [DataField, AutoNetworkedField]
     public bool Flipped = false;
