@@ -215,7 +215,7 @@ public abstract partial class SharedStackSystem : EntitySystem
                 Category = VerbCategory.Split,
                 Act = () => UserSplit(ent, user, amount),
                 // we want to sort by size, not alphabetically by the verb text.
-                Priority = priority,
+                Priority = priority
             };
 
             priority--;
