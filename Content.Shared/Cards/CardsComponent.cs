@@ -1,3 +1,4 @@
+using Robust.Shared.Audio;
 using Robust.Shared.GameStates;
 
 namespace Content.Shared.Cards;
@@ -16,4 +17,7 @@ public sealed partial class CardsComponent : Component
 
     [AutoNetworkedField]
     public bool BeingCherryPicked = false;
+
+    [DataField, AutoNetworkedField]
+    public SoundSpecifier ShuffleSound = new SoundPathSpecifier("/Audio/Effects/cardshuffle.ogg");
 }

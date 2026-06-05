@@ -8,7 +8,6 @@ using Robust.Shared.Serialization.TypeSerializers.Interfaces;
 
 namespace Content.Shared.Cards;
 
-[TypeSerializer]
 public sealed class CardDataSerializer : ITypeSerializer<CardData, ValueDataNode>
 {
     public CardData Read(
@@ -20,10 +19,7 @@ public sealed class CardDataSerializer : ITypeSerializer<CardData, ValueDataNode
         ISerializationManager.InstantiationDelegate<CardData>? instanceProvider = null
     )
     {
-        var protoMan = deps.Resolve<IPrototypeManager>();
-        if (!protoMan.TryIndex<CardPrototype>(node.Value, out var proto))
-            throw new InvalidMappingException($"Unknown card prototype: {node.Value} at {node.Start}");
-        return new CardData(proto);
+        return new CardData(node.Value);
     }
 
     public ValidationNode Validate(
@@ -48,17 +44,5 @@ public sealed class CardDataSerializer : ITypeSerializer<CardData, ValueDataNode
     )
     {
         return new ValueDataNode(value.CardId.ToString());
-    }
-
-    public CardData Copy(
-        ISerializationManager mgr,
-        CardData source,
-        CardData target,
-        IDependencyCollection deps,
-        SerializationHookContext ctx,
-        ISerializationContext? context = null
-    )
-    {
-        return source;
     }
 }

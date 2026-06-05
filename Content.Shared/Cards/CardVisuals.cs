@@ -12,8 +12,8 @@ public enum CardVisuals : byte
 [Serializable, NetSerializable]
 public sealed class CardListVisualState : ICloneable
 {
-    public readonly List<int> CardList;
-    public CardListVisualState(List<int> cardList)
+    public readonly List<CardData> CardList;
+    public CardListVisualState(List<CardData> cardList)
     {
         CardList = cardList;
     }

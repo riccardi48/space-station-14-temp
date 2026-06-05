@@ -11,23 +11,23 @@
     baseLayer: base
     halfOnAltInteract: false
     layerStates:
-    - brass
-    - brass_2
-    - brass_3
+    - deck_nanotrasen_empty
+    - deck_nanotrasen_low
+    - deck_nanotrasen_half
+    - deck_nanotrasen_full
     count: 1
     throwIndividually: true
     layerFunction: Threshold
   - type: StackLayerThreshold
-    thresholds: [5, 10]
+    thresholds: [2, 20, 35]
   - type: Sprite
-    sprite: Objects/Materials/Sheets/metal.rsi
-    state: brass
+    sprite: Objects/Fun/PlayingCards/nanotrasenbasiccards.rsi
+    state: deck_nanotrasen_empty
     layers:
-    - state: brass
+    - state: deck_nanotrasen_empty
       map: ["base"]
   - type: Item
-    sprite: Objects/Materials/Sheets/other.rsi
-  - type: InteractionOutline
+    sprite: Objects/Fun/PlayingCards/nanotrasenbasiccards.rsi
 
 - type: entity
   parent: BaseCards
@@ -90,9 +90,11 @@
         - King_of_Spades
     - type: Stack
       count: 52
+    - type: Sprite
+      state: deck_nanotrasen_full
 
 - type: stack
   id: CardsStack
   maxCount: 52
   spawn: BaseCards
-  icon: { sprite: /Textures/Objects/Materials/Sheets/metal.rsi, state: brass }
+  icon: { sprite: /Textures/Objects/Fun/PlayingCards/nanotrasenbasiccards.rsi, state: deck_nanotrasen_empty }

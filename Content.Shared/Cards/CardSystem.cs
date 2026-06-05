@@ -5,6 +5,7 @@ using Content.Shared.Interaction.Events;
 using Content.Shared.Popups;
 using Content.Shared.Stacks;
 using Content.Shared.Verbs;
+using Robust.Shared.Audio.Systems;
 
 namespace Content.Shared.Cards;
 
@@ -14,6 +15,7 @@ public abstract partial class SharedCardSystem : EntitySystem
     [Dependency] protected SharedHandsSystem Hands = default!;
     [Dependency] protected SharedPopupSystem Popup = default!;
     [Dependency] protected SharedAppearanceSystem Appearance = default!;
+    [Dependency] private SharedAudioSystem _audio = default!;
 
     public override void Initialize()
     {
@@ -40,8 +42,8 @@ public abstract partial class SharedCardSystem : EntitySystem
             PlayCardDrawAnimation(ent, (args.Mergee, mergeeComp), args.Delta);
         TakeFromDeck(ent.Comp, mergeeComp, args.Delta);
 
-        Appearance.SetData(ent, CardVisuals.CardList, new CardListVisualState(ent.Comp.Cards));
-        Appearance.SetData(args.Mergee, CardVisuals.CardList, new CardListVisualState(mergeeComp.Cards));
+        Appearance.SetData(ent, CardVisuals.CardList, GetCardListVisualState(ent.Comp));
+        Appearance.SetData(args.Mergee, CardVisuals.CardList, GetCardListVisualState(mergeeComp));
 
         Dirty(ent.Owner, ent.Comp);
         Dirty(args.Mergee, mergeeComp);
@@ -74,10 +76,10 @@ public abstract partial class SharedCardSystem : EntitySystem
         TakeFromDeck(splitComp, ent.Comp, delta);
         splitComp.Flipped = ent.Comp.Flipped;
         splitComp.Fanned = ent.Comp.Fanned;
-        Appearance.SetData(ent, CardVisuals.CardList, new CardListVisualState(ent.Comp.Cards));
+        Appearance.SetData(ent, CardVisuals.CardList, GetCardListVisualState(ent.Comp));
         if (TryComp<AppearanceComponent>(args.NewId, out var appearance))
         {
-            Appearance.SetData(args.NewId, CardVisuals.CardList, new CardListVisualState(splitComp.Cards), appearance);
+            Appearance.SetData(args.NewId, CardVisuals.CardList, GetCardListVisualState(splitComp), appearance);
             Appearance.SetData(args.NewId, CardVisuals.IsFlipped, splitComp.Flipped, appearance);
             Appearance.SetData(args.NewId, CardVisuals.IsFanned, splitComp.Fanned, appearance);
         }
@@ -91,7 +93,7 @@ public abstract partial class SharedCardSystem : EntitySystem
         MoveCards(comp1, comp2, selected);
     }
 
-    private void MoveCards(CardsComponent comp1, CardsComponent comp2, List<int> selected)
+    private void MoveCards(CardsComponent comp1, CardsComponent comp2, List<CardData> selected)
     {
         selected.ForEach(item => comp2.Cards.Remove(item));
         comp1.Cards = selected.Concat(comp1.Cards).ToList();
@@ -101,7 +103,7 @@ public abstract partial class SharedCardSystem : EntitySystem
         Log.Info(logString);
     }
 
-    protected List<int> MovedCards(CardsComponent comp, int delta)
+    protected List<CardData> MovedCards(CardsComponent comp, int delta)
     {
         if (comp.Flipped)
             return comp.Cards.Skip(Math.Max(0, comp.Cards.Count() - delta)).ToList();
@@ -203,7 +205,8 @@ public abstract partial class SharedCardSystem : EntitySystem
     {
         cards.Comp.Cards = cards.Comp.Cards.Shuffle().ToList();
         Log.Info("Shuffled");
-        Appearance.SetData(cards, CardVisuals.CardList, new CardListVisualState(cards.Comp.Cards));
+        Appearance.SetData(cards, CardVisuals.CardList, GetCardListVisualState(cards.Comp));
+        _audio.PlayPredicted(cards.Comp.ShuffleSound, cards, null);
         Dirty(cards.Owner, cards.Comp);
         return true;
     }
@@ -257,7 +260,7 @@ public abstract partial class SharedCardSystem : EntitySystem
         cards.Comp.BeingCherryPicked = false;
 
         PlayCardTakeAnimation((split, newCardsComp), cards, cardInx);
-        MoveCards(newCardsComp, cards.Comp, new List<int> { cards.Comp.Cards[cardInx] });
+        MoveCards(newCardsComp, cards.Comp, new List<CardData> { cards.Comp.Cards[cardInx] });
 
         if (newCardsComp.Cards.Count == 1)
         {
@@ -268,10 +271,10 @@ public abstract partial class SharedCardSystem : EntitySystem
         Hands.PickupOrDrop(user.Owner, split);
         Popup.PopupCursor(Loc.GetString("comp-stack-split"), user.Owner);
 
-        Appearance.SetData(cards, CardVisuals.CardList, new CardListVisualState(cards.Comp.Cards));
+        Appearance.SetData(cards, CardVisuals.CardList, GetCardListVisualState(cards.Comp));
         if (TryComp<AppearanceComponent>(split, out var appearance))
         {
-            Appearance.SetData(split, CardVisuals.CardList, new CardListVisualState(newCardsComp.Cards), appearance);
+            Appearance.SetData(split, CardVisuals.CardList, GetCardListVisualState(newCardsComp), appearance);
             Appearance.SetData(split, CardVisuals.IsFlipped, newCardsComp.Flipped, appearance);
             Appearance.SetData(split, CardVisuals.IsFanned, newCardsComp.Fanned, appearance);
         }
@@ -280,5 +283,16 @@ public abstract partial class SharedCardSystem : EntitySystem
         Dirty(split, newCardsComp);
 
         return true;
+    }
+
+    private CardListVisualState GetCardListVisualState(CardsComponent cards)
+    {
+        if (cards.Flipped)
+            return new CardListVisualState(new List<CardData>([]));
+        if (cards.Fanned)
+        {
+            return new CardListVisualState(cards.Cards);
+        }
+        return new CardListVisualState(new List<CardData>([cards.Cards.Last()]));
     }
 }
