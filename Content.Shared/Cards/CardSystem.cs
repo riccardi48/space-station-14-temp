@@ -168,11 +168,11 @@ public abstract partial class SharedCardSystem : EntitySystem
 
         if (ent.Comp.Fanned && Hands.GetActiveItem(user) != ent.Owner)
         {
+            var priority = -200;
             for (var i = 0; i < ent.Comp.Cards.Count; i++)
             {
                 var card = ent.Comp.Cards[i];
                 var cardName = $"{card}";
-                var priority = -200;
                 var index = i;
 
                 Log.Info($"{i} {ent.Comp.Cards.Count}");

@@ -17,17 +17,17 @@ public sealed partial class CardSystem : SharedCardSystem
     [Dependency]
     private SharedStackSystem _stack = default!;
 
-    protected override void PlayCardDrawAnimation(
+    private override void PlayCardDrawAnimation(
         Entity<CardsComponent> merger,
         Entity<CardsComponent> mergee,
         int delta
     )
     {
-        var selected = MovedCards(merger.Comp, delta);
-        PlayCardAnimation(merger, mergee, selected);
+        var selected = MovedCards(mergee.Comp, delta);
+        PlayCardAnimation(merger.Owner, mergee.Owner, selected);
     }
 
-    protected override void PlayCardTakeAnimation(
+    private override void PlayCardTakeAnimation(
         Entity<CardsComponent> merger,
         Entity<CardsComponent> mergee,
         int cardInx
@@ -35,17 +35,17 @@ public sealed partial class CardSystem : SharedCardSystem
     {
         Log.Info($"{cardInx} {mergee.Comp.Cards.Count}");
         List<int> selected = new List<int> { mergee.Comp.Cards[cardInx] };
-        PlayCardAnimation(merger, mergee, selected);
+        PlayCardAnimation(merger.Owner, mergee.Owner, selected);
     }
 
-    private void PlayCardAnimation(Entity<CardsComponent> merger, Entity<CardsComponent> mergee, List<int> selected)
+    private void PlayCardAnimation(EntityUid merger, EntityUid mergee, List<int> selected)
     {
-        var mergeeCoords = Transform(mergee.Owner).Coordinates;
-        var mergerCoords = Transform(merger.Owner).Coordinates;
-        var localRotation = Transform(mergee.Owner).LocalRotation;
+        var mergeeCoords = Transform(mergee).Coordinates;
+        var mergerCoords = Transform(merger).Coordinates;
+        var localRotation = Transform(mergee).LocalRotation;
         var ent = SpawnTempClone(mergerCoords, selected);
         _storage.PlayPickupAnimation(ent, mergeeCoords, mergerCoords, localRotation);
-        QueueDel(ent);
+        PredictedQueueDel(ent);
     }
 
     private EntityUid SpawnTempClone(EntityCoordinates mergerCoords, List<int> selected)
@@ -54,7 +54,7 @@ public sealed partial class CardSystem : SharedCardSystem
         if (!TryComp<CardsComponent>(ent, out var cardsComp) || !TryComp<StackComponent>(ent, out var stackComp))
             return EntityUid.Invalid;
         cardsComp.Cards = selected;
-        _stack.SetCount((ent, stackComp), cardsComp.Cards.Count);
+        Stacks.SetCount((ent, stackComp), cardsComp.Cards.Count);
         return ent;
     }
 }
