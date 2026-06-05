@@ -17,7 +17,7 @@ public sealed partial class CardSystem : SharedCardSystem
     [Dependency]
     private SharedStackSystem _stack = default!;
 
-    private override void PlayCardDrawAnimation(
+    protected override void PlayCardDrawAnimation(
         Entity<CardsComponent> merger,
         Entity<CardsComponent> mergee,
         int delta
@@ -27,7 +27,7 @@ public sealed partial class CardSystem : SharedCardSystem
         PlayCardAnimation(merger.Owner, mergee.Owner, selected);
     }
 
-    private override void PlayCardTakeAnimation(
+    protected override void PlayCardTakeAnimation(
         Entity<CardsComponent> merger,
         Entity<CardsComponent> mergee,
         int cardInx
