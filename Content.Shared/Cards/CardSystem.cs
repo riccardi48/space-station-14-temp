@@ -294,6 +294,8 @@ public abstract partial class SharedCardSystem : EntitySystem
         {
             return new CardListVisualState(cards.Cards);
         }
-        return new CardListVisualState(new List<ProtoId<CardPrototype>> { cards.Cards.Last() });
+        if (cards.Cards.Count != 0)
+            return new CardListVisualState(new List<ProtoId<CardPrototype>> { cards.Cards.Last() });
+        return new CardListVisualState(new List<ProtoId<CardPrototype>>([]));
     }
 }
