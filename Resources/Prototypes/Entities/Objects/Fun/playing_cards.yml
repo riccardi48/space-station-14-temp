@@ -15,6 +15,9 @@
     - brass_3
     count: 1
     throwIndividually: true
+    layerFunction: Threshold
+  - type: StackLayerThreshold
+    thresholds: [5, 10]
   - type: Sprite
     sprite: Objects/Materials/Sheets/metal.rsi
     state: brass

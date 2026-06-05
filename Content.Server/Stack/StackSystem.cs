@@ -13,46 +13,7 @@ namespace Content.Server.Stack
     [UsedImplicitly]
     public sealed partial class StackSystem : SharedStackSystem
     {
-        [Dependency] private IPrototypeManager _prototypeManager = default!;
-
         #region Spawning
-
-        /// <summary>
-        /// Spawns a new entity and moves an amount to it from the stack.
-        /// Moves nothing if amount is greater than ent's stack count.
-        /// </summary>
-        /// <param name="ent">Entity to split in a new stack.</param>
-        /// <param name="amount">How much to move to the new entity.</param>
-        /// <param name="spawnPosition">Where to spawn the new stack</param>
-        /// <returns>Null if StackComponent doesn't resolve, or amount to move is greater than ent has available.</returns>
-        [PublicAPI]
-        public EntityUid? Split(Entity<StackComponent?> ent, int amount, EntityCoordinates spawnPosition)
-        {
-            if (!Resolve(ent.Owner, ref ent.Comp))
-                return null;
-
-            // Try to remove the amount of things we want to split from the original stack...
-            if (!TryUse(ent, amount))
-                return null;
-
-            if (!_prototypeManager.Resolve(ent.Comp.StackTypeId, out var stackType))
-                return null;
-
-            // Set the output parameter in the event instance to the newly split stack.
-            var newEntity = SpawnAtPosition(stackType.Spawn, spawnPosition);
-
-            // There should always be a StackComponent
-            var stackComp = Comp<StackComponent>(newEntity);
-
-            SetCount((newEntity, stackComp), amount);
-            stackComp.Unlimited = false; // Don't let people dupe unlimited stacks
-            Dirty(newEntity, stackComp);
-
-            var ev = new StackSplitEvent(newEntity);
-            RaiseLocalEvent(ent, ref ev);
-
-            return newEntity;
-        }
 
         #region SpawnAtPosition
 
@@ -73,7 +34,7 @@ namespace Content.Server.Stack
         [PublicAPI]
         public EntityUid SpawnAtPosition(int count, ProtoId<StackPrototype> id, EntityCoordinates spawnPosition)
         {
-            var proto = _prototypeManager.Index(id);
+            var proto = _prototype.Index(id);
             return SpawnAtPosition(count, proto, spawnPosition);
         }
 
@@ -145,7 +106,7 @@ namespace Content.Server.Stack
                                                        int amount,
                                                        EntityCoordinates spawnPosition)
         {
-            var stackProto = _prototypeManager.Index(stackId);
+            var stackProto = _prototype.Index(stackId);
             return SpawnMultipleAtPosition(stackProto.Spawn,
                                             CalculateSpawns(stackProto, amount),
                                             spawnPosition);
@@ -167,7 +128,7 @@ namespace Content.Server.Stack
         [PublicAPI]
         public EntityUid SpawnNextToOrDrop(int amount, ProtoId<StackPrototype> id, EntityUid source)
         {
-            var proto = _prototypeManager.Index(id);
+            var proto = _prototype.Index(id);
             return SpawnNextToOrDrop(amount, proto, source);
         }
 
@@ -234,7 +195,7 @@ namespace Content.Server.Stack
                                                          int amount,
                                                          EntityUid target)
         {
-            var stackProto = _prototypeManager.Index(stackId);
+            var stackProto = _prototype.Index(stackId);
             return SpawnMultipleNextToOrDrop(stackProto.Spawn,
                                              CalculateSpawns(stackProto, amount),
                                              target);
@@ -279,30 +240,6 @@ namespace Content.Server.Stack
         }
 
         #endregion
-        #endregion
-        #region Event Handlers
-
-        /// <inheritdoc />
-        protected override void UserSplit(Entity<StackComponent> stack, Entity<TransformComponent?> user, int amount)
-        {
-            if (!Resolve(user.Owner, ref user.Comp, false))
-                return;
-
-            if (amount <= 0)
-                return;
-
-            if (Hands.TryGetActiveItem(user.Owner, out var recipient)
-                && TryComp<StackComponent>(recipient, out var recipientStack)
-                && TryMergeStacks((stack.Owner, stack.Comp), (recipient.Value, recipientStack), out var transferred, amount: amount))
-                return;
-
-            if (Split(stack.AsNullable(), amount, user.Comp.Coordinates) is not { } split)
-                return;
-
-            Hands.PickupOrDrop(user.Owner, split);
-
-            Popup.PopupCursor(Loc.GetString("comp-stack-split"), user.Owner);
-        }
         #endregion
     }
 }

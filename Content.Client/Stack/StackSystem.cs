@@ -1,8 +1,12 @@
 using Content.Client.Items;
 using Content.Client.Storage.Systems;
+using Content.Shared.Popups;
 using Content.Shared.Stacks;
 using JetBrains.Annotations;
 using Robust.Client.GameObjects;
+using Robust.Shared.Map;
+using Robust.Shared.Prototypes;
+using Robust.Shared.Timing;
 
 namespace Content.Client.Stack
 {
@@ -115,5 +119,6 @@ namespace Content.Client.Stack
         }
 
         #endregion
+
     }
 }

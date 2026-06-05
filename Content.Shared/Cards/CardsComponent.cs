@@ -13,4 +13,7 @@ public sealed partial class CardsComponent : Component
 
     [DataField, AutoNetworkedField]
     public bool Fanned = false;
+
+    [AutoNetworkedField]
+    public bool BeingCherryPicked = false;
 }

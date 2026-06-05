@@ -8,6 +8,7 @@ using Content.Shared.Storage.EntitySystems;
 using Content.Shared.Verbs;
 using JetBrains.Annotations;
 using Robust.Shared.GameStates;
+using Robust.Shared.Map;
 using Robust.Shared.Physics.Systems;
 using Robust.Shared.Prototypes;
 using Robust.Shared.Timing;
@@ -21,7 +22,7 @@ namespace Content.Shared.Stacks;
 [UsedImplicitly]
 public abstract partial class SharedStackSystem : EntitySystem
 {
-    [Dependency] private IPrototypeManager _prototype = default!;
+    [Dependency] protected IPrototypeManager _prototype = default!;
     [Dependency] private IViewVariablesManager _vvm = default!;
     [Dependency] protected SharedAppearanceSystem Appearance = default!;
     [Dependency] protected SharedHandsSystem Hands = default!;
@@ -230,18 +231,65 @@ public abstract partial class SharedStackSystem : EntitySystem
     ///     This empty virtual method allows for UserSplit() to be called on the server from the client.
     ///     When prediction is improved, those two methods should be moved to shared, in order to predict the splitting itself (not just the verbs)
     /// </remarks>
-    protected virtual void UserSplit(Entity<StackComponent> stack, Entity<TransformComponent?> user, int amount)
+    private void UserSplit(Entity<StackComponent> stack, Entity<TransformComponent?> user, int amount)
     {
-        if (amount <= 0)
-        {
-            Popup.PopupCursor(Loc.GetString("comp-stack-split-too-small"), user.Owner, PopupType.Medium);
+        if (!Resolve(user.Owner, ref user.Comp, false))
             return;
-        }
+
+        if (amount <= 0)
+            return;
 
         if (Hands.TryGetActiveItem(user.Owner, out var recipient)
             && TryComp<StackComponent>(recipient, out var recipientStack)
             && TryMergeStacks((stack.Owner, stack.Comp), (recipient.Value, recipientStack), out var transferred, amount: amount))
             return;
+
+        if (Split(stack.AsNullable(), amount, user.Comp.Coordinates) is not { } split)
+            return;
+
+        Hands.PickupOrDrop(user.Owner, split);
+
+        var ev = new StackAfterSplitEvent(split);
+        RaiseLocalEvent(stack.Owner, ref ev);
+
+        Popup.PopupCursor(Loc.GetString("comp-stack-split"), user.Owner);
+    }
+
+    /// <summary>
+    /// Spawns a new entity and moves an amount to it from the stack.
+    /// Moves nothing if amount is greater than ent's stack count.
+    /// </summary>
+    /// <param name="ent">Entity to split in a new stack.</param>
+    /// <param name="amount">How much to move to the new entity.</param>
+    /// <param name="spawnPosition">Where to spawn the new stack</param>
+    /// <returns>Null if StackComponent doesn't resolve, or amount to move is greater than ent has available.</returns>
+    [PublicAPI]
+    public EntityUid? Split(Entity<StackComponent?> ent, int amount, EntityCoordinates spawnPosition)
+    {
+        if (!Resolve(ent.Owner, ref ent.Comp))
+            return null;
+
+        // Try to remove the amount of things we want to split from the original stack...
+        if (!TryUse(ent, amount))
+            return null;
+
+        if (!_prototype.Resolve(ent.Comp.StackTypeId, out var stackType))
+            return null;
+
+        // Set the output parameter in the event instance to the newly split stack.
+        var newEntity = PredictedSpawnAtPosition(stackType.Spawn, spawnPosition);
+
+        // There should always be a StackComponent
+        var stackComp = Comp<StackComponent>(newEntity);
+
+        SetCount((newEntity, stackComp), amount);
+        stackComp.Unlimited = false; // Don't let people dupe unlimited stacks
+        Dirty(newEntity, stackComp);
+
+        var ev = new StackSplitEvent(newEntity);
+        RaiseLocalEvent(ent, ref ev);
+
+        return newEntity;
     }
 }
 
