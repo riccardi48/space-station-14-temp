@@ -2,6 +2,7 @@ using Robust.Shared.Prototypes;
 
 namespace Content.Shared.Cards;
 
+[Prototype]
 public sealed partial class CardPrototype : IPrototype
 {
     [IdDataField]

@@ -5,6 +5,7 @@ using Content.Shared.Storage.EntitySystems;
 using JetBrains.Annotations;
 using Robust.Client.GameObjects;
 using Robust.Shared.Map;
+using Robust.Shared.Prototypes;
 
 namespace Content.Client.Cards;
 
@@ -26,7 +27,6 @@ public sealed partial class CardSystem : SharedCardSystem
         SubscribeLocalEvent<CardsComponent, AppearanceChangeEvent>(OnAppearanceChanged);
     }
 
-
     protected override void PlayCardDrawAnimation(
         Entity<CardsComponent> merger,
         Entity<CardsComponent> mergee,
@@ -44,11 +44,11 @@ public sealed partial class CardSystem : SharedCardSystem
     )
     {
         Log.Info($"{cardInx} {mergee.Comp.Cards.Count}");
-        List<CardData> selected = new List<CardData> { mergee.Comp.Cards[cardInx] };
+        List<ProtoId<CardPrototype>> selected = new List<ProtoId<CardPrototype>> { mergee.Comp.Cards[cardInx] };
         PlayCardAnimation(merger.Owner, mergee.Owner, selected);
     }
 
-    private void PlayCardAnimation(EntityUid merger, EntityUid mergee, List<CardData> selected)
+    private void PlayCardAnimation(EntityUid merger, EntityUid mergee, List<ProtoId<CardPrototype>> selected)
     {
         var mergeeCoords = Transform(mergee).Coordinates;
         var mergerCoords = Transform(merger).Coordinates;
@@ -60,7 +60,7 @@ public sealed partial class CardSystem : SharedCardSystem
         PredictedQueueDel(ent);
     }
 
-    private EntityUid SpawnTempClone(EntityCoordinates mergerCoords, List<CardData> selected)
+    private EntityUid SpawnTempClone(EntityCoordinates mergerCoords, List<ProtoId<CardPrototype>> selected)
     {
         var ent = Spawn("BaseCards", mergerCoords);
         if (!TryComp<CardsComponent>(ent, out var cardsComp) || !TryComp<StackComponent>(ent, out var stackComp))
@@ -92,12 +92,12 @@ public sealed partial class CardSystem : SharedCardSystem
             fanned = false;
 
         if (!Appearance.TryGetData<CardListVisualState>(uid, CardVisuals.CardList, out var visualState, args.Component))
-            visualState = new CardListVisualState(new List<CardData>([]));
+            visualState = new CardListVisualState(new List<ProtoId<CardPrototype>>([]));
 
         if (!TryComp<SpriteComponent>(uid, out var sprite))
             return;
 
-        List<CardData> cardList = visualState.CardList;
+        List<ProtoId<CardPrototype>> cardList = visualState.CardList;
         int cardCount = cardList.Count;
     }
 }

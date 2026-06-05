@@ -1,3 +1,4 @@
+using Robust.Shared.Prototypes;
 using Robust.Shared.Serialization;
 
 namespace Content.Shared.Cards;
@@ -12,8 +13,8 @@ public enum CardVisuals : byte
 [Serializable, NetSerializable]
 public sealed class CardListVisualState : ICloneable
 {
-    public readonly List<CardData> CardList;
-    public CardListVisualState(List<CardData> cardList)
+    public readonly List<ProtoId<CardPrototype>> CardList;
+    public CardListVisualState(List<ProtoId<CardPrototype>> cardList)
     {
         CardList = cardList;
     }

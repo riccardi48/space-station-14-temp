@@ -1,5 +1,6 @@
 using Robust.Shared.Audio;
 using Robust.Shared.GameStates;
+using Robust.Shared.Prototypes;
 
 namespace Content.Shared.Cards;
 
@@ -7,7 +8,7 @@ namespace Content.Shared.Cards;
 public sealed partial class CardsComponent : Component
 {
     [DataField("cards", required: true), AutoNetworkedField]
-    public List<CardData> Cards = new();
+    public List<ProtoId<CardPrototype>> Cards = new();
 
     [DataField, AutoNetworkedField]
     public bool Flipped = false;

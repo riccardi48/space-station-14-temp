@@ -5,6 +5,4 @@ namespace Content.Server.Cards;
 
 /// <inheritdoc />
 [UsedImplicitly]
-public sealed partial class CardSystem : SharedCardSystem
-{
-}
+public sealed partial class CardSystem : SharedCardSystem { }

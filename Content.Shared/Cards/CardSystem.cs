@@ -6,6 +6,7 @@ using Content.Shared.Popups;
 using Content.Shared.Stacks;
 using Content.Shared.Verbs;
 using Robust.Shared.Audio.Systems;
+using Robust.Shared.Prototypes;
 
 namespace Content.Shared.Cards;
 
@@ -93,7 +94,7 @@ public abstract partial class SharedCardSystem : EntitySystem
         MoveCards(comp1, comp2, selected);
     }
 
-    private void MoveCards(CardsComponent comp1, CardsComponent comp2, List<CardData> selected)
+    private void MoveCards(CardsComponent comp1, CardsComponent comp2, List<ProtoId<CardPrototype>> selected)
     {
         selected.ForEach(item => comp2.Cards.Remove(item));
         comp1.Cards = selected.Concat(comp1.Cards).ToList();
@@ -103,7 +104,7 @@ public abstract partial class SharedCardSystem : EntitySystem
         Log.Info(logString);
     }
 
-    protected List<CardData> MovedCards(CardsComponent comp, int delta)
+    protected List<ProtoId<CardPrototype>> MovedCards(CardsComponent comp, int delta)
     {
         if (comp.Flipped)
             return comp.Cards.Skip(Math.Max(0, comp.Cards.Count() - delta)).ToList();
@@ -260,7 +261,7 @@ public abstract partial class SharedCardSystem : EntitySystem
         cards.Comp.BeingCherryPicked = false;
 
         PlayCardTakeAnimation((split, newCardsComp), cards, cardInx);
-        MoveCards(newCardsComp, cards.Comp, new List<CardData> { cards.Comp.Cards[cardInx] });
+        MoveCards(newCardsComp, cards.Comp, new List<ProtoId<CardPrototype>> { cards.Comp.Cards[cardInx] });
 
         if (newCardsComp.Cards.Count == 1)
         {
@@ -288,11 +289,11 @@ public abstract partial class SharedCardSystem : EntitySystem
     private CardListVisualState GetCardListVisualState(CardsComponent cards)
     {
         if (cards.Flipped)
-            return new CardListVisualState(new List<CardData>([]));
+            return new CardListVisualState(new List<ProtoId<CardPrototype>>([]));
         if (cards.Fanned)
         {
             return new CardListVisualState(cards.Cards);
         }
-        return new CardListVisualState(new List<CardData>([cards.Cards.Last()]));
+        return new CardListVisualState(new List<ProtoId<CardPrototype>> { cards.Cards.Last() });
     }
 }
