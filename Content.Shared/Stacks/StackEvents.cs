@@ -9,6 +9,3 @@ public readonly record struct MergeEvent(EntityUid Merger, EntityUid Mergee, int
 /// <param name="NewId">The entity id of the new stack.</param>
 [ByRefEvent]
 public readonly record struct StackSplitEvent(EntityUid NewId);
-
-[ByRefEvent]
-public readonly record struct StackAfterSplitEvent(EntityUid NewId);

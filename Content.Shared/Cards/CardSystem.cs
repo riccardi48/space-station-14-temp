@@ -23,7 +23,7 @@ public abstract partial class SharedCardSystem : EntitySystem
     {
         base.Initialize();
         SubscribeLocalEvent<CardsComponent, MergeEvent>(OnMergeEvent);
-        SubscribeLocalEvent<CardsComponent, StackAfterSplitEvent>(OnSplitEvent);
+        SubscribeLocalEvent<CardsComponent, StackSplitEvent>(OnSplitEvent);
         SubscribeLocalEvent<CardsComponent, GetVerbsEvent<AlternativeVerb>>(OnCardsAlternativeInteract);
 
         SubscribeLocalEvent<CardsComponent, ActivateInWorldEvent>(OnCardsActivate);
@@ -60,8 +60,10 @@ public abstract partial class SharedCardSystem : EntitySystem
         int cardInx
     ) { }
 
-    private void OnSplitEvent(Entity<CardsComponent> ent, ref StackAfterSplitEvent args)
+    private void OnSplitEvent(Entity<CardsComponent> ent, ref StackSplitEvent args)
     {
+        if (ent.Comp.BeingCherryPicked)
+            return;
         if (
             !TryComp<CardsComponent>(args.NewId, out var splitComp)
             || !TryComp<StackComponent>(args.NewId, out var splitStackComp)
@@ -220,49 +222,40 @@ public abstract partial class SharedCardSystem : EntitySystem
     {
         if (!cards.Comp.Fanned || !cards.Comp.Flipped)
             return false;
-        Log.Info("EEEE");
-        if (
-            !Resolve(user.Owner, ref user.Comp, false)
-            || !TryComp<StackComponent>(cards.Owner, out var stackComp)
-            || stackComp == null
-        )
+        if (!Resolve(user.Owner, ref user.Comp, false) || !TryComp<StackComponent>(cards.Owner, out var stackComp))
             return false;
+
         cards.Comp.BeingCherryPicked = true;
-        if (
-            Hands.TryGetActiveItem(user.Owner, out var recipient)
-            && TryComp<StackComponent>(recipient, out var recipientStack)
-            && Stacks.TryMergeStacks(
-                (cards.Owner, stackComp),
-                (recipient.Value, recipientStack),
-                out var transferred,
-                amount: 1
-            )
-        )
+
+        bool Abort()
         {
-            Log.Info("AAAA");
             cards.Comp.BeingCherryPicked = false;
             return false;
         }
-        cards.Comp.BeingCherryPicked = false;
-        Log.Info("BBBB");
+
+        if (Hands.TryGetActiveItem(user.Owner, out var recipient)
+            && TryComp<StackComponent>(recipient, out var recipientStack)
+            && Stacks.TryMergeStacks((cards.Owner, stackComp), (recipient.Value, recipientStack), out _, amount: 1))
+            return Abort();
+
         if (Stacks.Split((cards.Owner, stackComp), 1, user.Comp.Coordinates) is not { } split)
-            return false;
-        Log.Info("CCCC");
+            return Abort();
+
         if (!TryComp<CardsComponent>(split, out var newCardsComp))
-        {
-            return false;
-        }
-        Log.Info("DDDD");
+            return Abort();
+
+        cards.Comp.BeingCherryPicked = false;
 
         PlayCardTakeAnimation((split, newCardsComp), cards, cardInx);
         MoveCards(newCardsComp, cards.Comp, new List<int> { cards.Comp.Cards[cardInx] });
+
         if (newCardsComp.Cards.Count == 1)
         {
             newCardsComp.Flipped = cards.Comp.Flipped;
             newCardsComp.Fanned = cards.Comp.Fanned;
         }
-        Hands.PickupOrDrop(user.Owner, split);
 
+        Hands.PickupOrDrop(user.Owner, split);
         Popup.PopupCursor(Loc.GetString("comp-stack-split"), user.Owner);
         Dirty(cards.Owner, cards.Comp);
         Dirty(split, newCardsComp);

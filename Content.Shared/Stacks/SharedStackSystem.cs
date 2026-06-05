@@ -249,9 +249,6 @@ public abstract partial class SharedStackSystem : EntitySystem
 
         Hands.PickupOrDrop(user.Owner, split);
 
-        var ev = new StackAfterSplitEvent(split);
-        RaiseLocalEvent(stack.Owner, ref ev);
-
         Popup.PopupCursor(Loc.GetString("comp-stack-split"), user.Owner);
     }
 
