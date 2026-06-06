@@ -101,16 +101,32 @@ public sealed partial class CardSystem : SharedCardSystem
         return ent;
     }
 
+    private static Vector2 FanPosition(double angle, float radius) =>
+        new((float)Math.Sin(angle) * radius, (float)Math.Cos(angle) * radius - radius * (3 / 4f));
+
+    private static float FanRadius(int count) =>
+        count <= 1 ? 0f : (float)Math.Sqrt(count / 20f);
+
+    private static (string Base, string LayerOne, string LayerTwo) CardLayers(int i) =>
+        ($"card_{i * 3}", $"card_{i * 3 + 1}", $"card_{i * 3 + 2}");
+
+    private void PlaceCard(int i, CardPrototype prototype, string baseSprite, Entity<SpriteComponent?> sprite, Vector2 offset, Angle rotation)
+    {
+        var (baseLayer, layerOne, layerTwo) = CardLayers(i);
+        _sprite.LayerMapReserve(sprite, baseLayer);
+        _sprite.LayerMapReserve(sprite, layerOne);
+        _sprite.LayerMapReserve(sprite, layerTwo);
+        TransformCard(baseLayer, layerOne, layerTwo, offset, rotation, sprite);
+        BuildCard(prototype, baseLayer, baseSprite, layerOne, layerTwo, sprite);
+    }
+
     private void OnAppearanceChanged(EntityUid uid, CardsComponent component, ref AppearanceChangeEvent args)
     {
-        if (!Appearance.TryGetData<bool>(uid, CardVisuals.IsFlipped, out var flipped, args.Component))
-            flipped = false;
+        Appearance.TryGetData<bool>(uid, CardVisuals.IsFlipped, out var flipped, args.Component);
+        Appearance.TryGetData<bool>(uid, CardVisuals.IsFanned, out var fanned, args.Component);
 
         if (!Appearance.TryGetData<CardListVisualState>(uid, CardVisuals.CardList, out var visualState, args.Component))
             visualState = new CardListVisualState(new List<ProtoId<CardPrototype>>());
-
-        if (!Appearance.TryGetData<bool>(uid, CardVisuals.IsFanned, out var fanned, args.Component))
-            fanned = false;
 
         if (
             !TryComp<SpriteComponent>(uid, out var sprite)
@@ -130,53 +146,25 @@ public sealed partial class CardSystem : SharedCardSystem
             return;
 
         Appearance.SetData(uid, StackVisuals.Hide, false, args.Component);
-
         _sprite.LayerSetVisible((uid, sprite), "base", false);
-        CardPrototype? prototype;
+
         if (fanned)
         {
             var count = visualState.CardList.Count;
+            var radius = FanRadius(count);
             for (var i = 0; i < count; i++)
             {
-                if (!_prototypeManager.TryIndex<CardPrototype>(visualState.CardList[i].Id, out prototype))
+                if (!_prototypeManager.TryIndex<CardPrototype>(visualState.CardList[i].Id, out var prototype))
                     continue;
-                _sprite.LayerMapReserve((uid, sprite), $"card_{i * 3}");
-                _sprite.LayerMapReserve((uid, sprite), $"card_{i * 3 + 1}");
-                _sprite.LayerMapReserve((uid, sprite), $"card_{i * 3 + 2}");
                 var angle = (i - count / 2.0 + 0.5) / count * Math.PI;
-                var radius = (float)Math.Sqrt(count / 20f);
-                if (count == 1)
-                    radius = 0;
-                TransformCard(
-                    $"card_{i * 3}",
-                    $"card_{i * 3 + 1}",
-                    $"card_{i * 3 + 2}",
-                    new Vector2(
-                        (float)Math.Sin(angle) * radius,
-                        (float)Math.Cos(angle) * radius - (radius * (3f / 4f))
-                    ),
-                    new Angle(-angle),
-                    (uid, sprite)
-                );
-                BuildCard(
-                    prototype,
-                    $"card_{i * 3}",
-                    component.BaseState,
-                    $"card_{i * 3 + 1}",
-                    $"card_{i * 3 + 2}",
-                    (uid, sprite)
-                );
+                PlaceCard(i, prototype, component.BaseState, (uid, sprite), FanPosition(angle, radius), new Angle(-angle));
             }
             return;
         }
         var id = visualState.CardList.FirstOrDefault().Id;
-        if (id == null || !_prototypeManager.TryIndex<CardPrototype>(id, out prototype))
+        if (id == null || !_prototypeManager.TryIndex<CardPrototype>(id, out var topCard))
             return;
-        _sprite.LayerMapReserve((uid, sprite), "card_0");
-        _sprite.LayerMapReserve((uid, sprite), "card_1");
-        _sprite.LayerMapReserve((uid, sprite), "card_2");
-        TransformCard("card_0", "card_1", "card_2", new Vector2(0, 0), new Angle(0), (uid, sprite));
-        BuildCard(prototype, "card_0", component.BaseState, "card_1", "card_2", (uid, sprite));
+        PlaceCard(0, topCard, component.BaseState, (uid, sprite), Vector2.Zero, Angle.Zero);
     }
 
     public void BuildCard(
@@ -198,6 +186,7 @@ public sealed partial class CardSystem : SharedCardSystem
             if (prototype.LayerOneColor != null)
                 _sprite.LayerSetColor(sprite, layerOne, prototype.LayerOneColor.Value);
         }
+
         if (prototype.LayerTwoState != null)
         {
             _sprite.LayerSetVisible(sprite, layerTwo, true);
