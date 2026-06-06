@@ -104,13 +104,19 @@ public sealed partial class CardSystem : SharedCardSystem
     private static Vector2 FanPosition(double angle, float radius) =>
         new((float)Math.Sin(angle) * radius, (float)Math.Cos(angle) * radius - radius * (3 / 4f));
 
-    private static float FanRadius(int count) =>
-        count <= 1 ? 0f : (float)Math.Sqrt(count / 20f);
+    private static float FanRadius(int count) => count <= 1 ? 0f : (float)Math.Sqrt(count / 20f);
 
     private static (string Base, string LayerOne, string LayerTwo) CardLayers(int i) =>
         ($"card_{i * 3}", $"card_{i * 3 + 1}", $"card_{i * 3 + 2}");
 
-    private void PlaceCard(int i, CardPrototype prototype, string baseSprite, Entity<SpriteComponent?> sprite, Vector2 offset, Angle rotation)
+    private void PlaceCard(
+        int i,
+        CardPrototype prototype,
+        string baseSprite,
+        Entity<SpriteComponent?> sprite,
+        Vector2 offset,
+        Angle rotation
+    )
     {
         var (baseLayer, layerOne, layerTwo) = CardLayers(i);
         _sprite.LayerMapReserve(sprite, baseLayer);
@@ -157,7 +163,14 @@ public sealed partial class CardSystem : SharedCardSystem
                 if (!_prototypeManager.TryIndex<CardPrototype>(visualState.CardList[i].Id, out var prototype))
                     continue;
                 var angle = (i - count / 2.0 + 0.5) / count * Math.PI;
-                PlaceCard(i, prototype, component.BaseState, (uid, sprite), FanPosition(angle, radius), new Angle(-angle));
+                PlaceCard(
+                    i,
+                    prototype,
+                    component.BaseState,
+                    (uid, sprite),
+                    FanPosition(angle, radius),
+                    new Angle(-angle)
+                );
             }
             return;
         }
