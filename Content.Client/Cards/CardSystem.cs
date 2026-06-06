@@ -8,6 +8,7 @@ using JetBrains.Annotations;
 using Robust.Client.GameObjects;
 using Robust.Shared.Map;
 using Robust.Shared.Prototypes;
+using Robust.Shared.Timing;
 
 namespace Content.Client.Cards;
 
@@ -27,65 +28,61 @@ public sealed partial class CardSystem : SharedCardSystem
     [Dependency]
     private IPrototypeManager _prototypeManager = default!;
 
+    [Dependency]
+    private IGameTiming _timing = default!;
+
     public override void Initialize()
     {
         base.Initialize();
 
         // UpdatesBefore.Add(typeof(SharedStackSystem));
         SubscribeLocalEvent<CardsComponent, AppearanceChangeEvent>(OnAppearanceChanged);
+        SubscribeNetworkEvent<CardAnimationEvent>(HandleCardAnimation);
     }
 
-    protected override void PlayCardDrawAnimation(
-        Entity<CardsComponent> merger,
-        Entity<CardsComponent> mergee,
-        int delta
-    )
+    private void HandleCardAnimation(CardAnimationEvent args)
     {
-        var selected = MovedCards(mergee.Comp, delta);
-        PlayCardAnimation(merger, mergee, selected);
+        var merger = GetEntity(args.Merger);
+        var mergee = GetEntity(args.Mergee);
+        if (
+            !TryComp<CardsComponent>(merger, out var mergerComp) || !TryComp<CardsComponent>(mergee, out var mergeeComp)
+        )
+            return;
+        PlayCardAnimation((merger, mergerComp), (mergee, mergeeComp), args.Selected);
     }
 
-    protected override void PlayCardTakeAnimation(
-        Entity<CardsComponent> merger,
-        Entity<CardsComponent> mergee,
-        int cardInx
-    )
-    {
-        Log.Info($"{cardInx} {mergee.Comp.Cards.Count}");
-        List<ProtoId<CardPrototype>> selected = new List<ProtoId<CardPrototype>> { mergee.Comp.Cards[cardInx] };
-        PlayCardAnimation(merger, mergee, selected);
-    }
-
-    private void PlayCardAnimation(
+    protected override void PlayCardAnimation(
         Entity<CardsComponent> merger,
         Entity<CardsComponent> mergee,
         List<ProtoId<CardPrototype>> selected
     )
     {
+        if (_timing.ApplyingState)
+            return;
         var mergeeCoords = Transform(mergee.Owner).Coordinates;
         var mergerCoords = Transform(merger.Owner).Coordinates;
         var localRotation = Transform(mergee.Owner).LocalRotation;
-        var ent = SpawnTempClone(mergee, mergerCoords, selected);
+        var ent = SpawnTempClone(mergee, mergeeCoords, selected);
         if (ent == EntityUid.Invalid)
             return;
         _storage.PlayPickupAnimation(ent, mergeeCoords, mergerCoords, localRotation);
-        PredictedQueueDel(ent);
+        QueueDel(ent);
     }
 
     private EntityUid SpawnTempClone(
         Entity<CardsComponent> mergee,
-        EntityCoordinates mergerCoords,
+        EntityCoordinates mergeeCoords,
         List<ProtoId<CardPrototype>> selected
     )
     {
-        var ent = Spawn("BaseCards", mergerCoords);
+        var ent = Spawn("BaseCards", mergeeCoords);
         if (
             !TryComp<CardsComponent>(ent, out var cardsComp)
             || !TryComp<StackComponent>(ent, out var stackComp)
             || !TryComp(ent, out SpriteComponent? spriteComp)
         )
         {
-            PredictedQueueDel(ent);
+            QueueDel(ent);
             return EntityUid.Invalid;
         }
         cardsComp.Cards = selected;
@@ -96,6 +93,14 @@ public sealed partial class CardSystem : SharedCardSystem
             Appearance.SetData(ent, CardVisuals.CardList, GetCardListVisualState(cardsComp), appearance);
             Appearance.SetData(ent, CardVisuals.IsFlipped, cardsComp.Flipped, appearance);
             Appearance.SetData(ent, CardVisuals.IsFanned, cardsComp.Fanned, appearance);
+
+            var ev = new AppearanceChangeEvent
+            {
+                Component = appearance,
+                AppearanceData = new Dictionary<Enum, object>(),
+                Sprite = spriteComp,
+            };
+            RaiseLocalEvent(ent, ref ev);
         }
         _sprite.SetVisible((ent, spriteComp), false);
         return ent;
@@ -134,18 +139,17 @@ public sealed partial class CardSystem : SharedCardSystem
         if (!Appearance.TryGetData<CardListVisualState>(uid, CardVisuals.CardList, out var visualState, args.Component))
             visualState = new CardListVisualState(new List<ProtoId<CardPrototype>>());
 
-        if (
-            !TryComp<SpriteComponent>(uid, out var sprite)
-            || !TryComp<StackComponent>(uid, out var stack)
-            || !_prototypeManager.TryIndex(stack.StackTypeId, out var stackPrototype)
-        )
+        if (!TryComp<SpriteComponent>(uid, out var sprite) || !TryComp<CardsComponent>(uid, out var cards))
             return;
 
-        for (var i = 0; i < stackPrototype.MaxCount * 3; i++)
+        for (var i = 0; i < cards.MaxFanned; i++)
         {
-            if (!_sprite.LayerExists((uid, sprite), $"card_{i}"))
+            var (baseLayer, layerOne, layerTwo) = CardLayers(i);
+            if (!_sprite.LayerExists((uid, sprite), baseLayer))
                 break;
-            _sprite.LayerSetVisible((uid, sprite), $"card_{i}", false);
+            _sprite.RemoveLayer((uid, sprite), baseLayer, false);
+            _sprite.RemoveLayer((uid, sprite), layerOne, false);
+            _sprite.RemoveLayer((uid, sprite), layerTwo, false);
         }
 
         if (!flipped)

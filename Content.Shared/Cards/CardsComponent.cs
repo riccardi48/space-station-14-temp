@@ -16,6 +16,9 @@ public sealed partial class CardsComponent : Component
     [DataField, AutoNetworkedField]
     public bool Fanned = false;
 
+    [DataField, AutoNetworkedField]
+    public int MaxFanned = 10;
+
     [AutoNetworkedField]
     public bool BeingCherryPicked = false;
 

@@ -8,6 +8,7 @@ using Content.Shared.Stacks;
 using Content.Shared.Verbs;
 using Robust.Shared.Audio.Systems;
 using Robust.Shared.Containers;
+using Robust.Shared.Player;
 using Robust.Shared.Prototypes;
 
 namespace Content.Shared.Cards;
@@ -69,6 +70,11 @@ public abstract partial class SharedCardSystem : EntitySystem
             PlayCardDrawAnimation(ent, (args.Mergee, mergeeComp), args.Delta);
         TakeFromDeck(ent.Comp, mergeeComp, args.Delta);
 
+        if (ent.Comp.Fanned == true && ent.Comp.Cards.Count > ent.Comp.MaxFanned)
+        {
+            ent.Comp.Fanned = false;
+            Appearance.SetData(ent, CardVisuals.IsFanned, ent.Comp.Fanned);
+        }
         Appearance.SetData(ent, CardVisuals.CardList, GetCardListVisualState(ent.Comp));
         Appearance.SetData(args.Mergee, CardVisuals.CardList, GetCardListVisualState(mergeeComp));
 
@@ -76,17 +82,23 @@ public abstract partial class SharedCardSystem : EntitySystem
         Dirty(args.Mergee, mergeeComp);
     }
 
-    protected virtual void PlayCardDrawAnimation(
-        Entity<CardsComponent> merger,
-        Entity<CardsComponent> mergee,
-        int delta
-    ) { }
+    protected void PlayCardDrawAnimation(Entity<CardsComponent> merger, Entity<CardsComponent> mergee, int delta)
+    {
+        var selected = MovedCards(mergee.Comp, delta);
+        PlayCardAnimation(merger, mergee, selected);
+    }
 
-    protected virtual void PlayCardTakeAnimation(
+    protected void PlayCardTakeAnimation(Entity<CardsComponent> merger, Entity<CardsComponent> mergee, int cardInx)
+    {
+        List<ProtoId<CardPrototype>> selected = new List<ProtoId<CardPrototype>> { mergee.Comp.Cards[cardInx] };
+        PlayCardAnimation(merger, mergee, selected);
+    }
+
+    protected abstract void PlayCardAnimation(
         Entity<CardsComponent> merger,
         Entity<CardsComponent> mergee,
-        int cardInx
-    ) { }
+        List<ProtoId<CardPrototype>> selected
+    );
 
     private void OnSplitEvent(Entity<CardsComponent> ent, ref StackSplitEvent args)
     {
@@ -273,12 +285,16 @@ public abstract partial class SharedCardSystem : EntitySystem
 
     private bool TryFanCards(Entity<CardsComponent> cards)
     {
-        cards.Comp.Fanned = cards.Comp.Fanned ^ true;
-        Log.Info("Fanned");
-        Appearance.SetData(cards, CardVisuals.CardList, GetCardListVisualState(cards.Comp));
-        Appearance.SetData(cards, CardVisuals.IsFanned, cards.Comp.Fanned);
-        Dirty(cards.Owner, cards.Comp);
-        return true;
+        if (cards.Comp.Cards.Count <= cards.Comp.MaxFanned)
+        {
+            cards.Comp.Fanned = cards.Comp.Fanned ^ true;
+            Log.Info("Fanned");
+            Appearance.SetData(cards, CardVisuals.CardList, GetCardListVisualState(cards.Comp));
+            Appearance.SetData(cards, CardVisuals.IsFanned, cards.Comp.Fanned);
+            Dirty(cards.Owner, cards.Comp);
+            return true;
+        }
+        return false;
     }
 
     private bool TryTakeCard(Entity<CardsComponent> cards, Entity<TransformComponent?> user, int cardInx)
@@ -342,7 +358,7 @@ public abstract partial class SharedCardSystem : EntitySystem
         if (!cards.Flipped)
             return new CardListVisualState(new List<ProtoId<CardPrototype>>());
         if (cards.Fanned)
-            return new CardListVisualState(cards.Cards);
+            return new CardListVisualState(cards.Cards.TakeLast(cards.MaxFanned).ToList());
         return new CardListVisualState(cards.Cards.TakeLast(1).ToList());
     }
 }
