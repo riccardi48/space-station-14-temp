@@ -24,9 +24,20 @@ public abstract partial class SharedCardSystem : EntitySystem
         SubscribeLocalEvent<CardsComponent, MergeEvent>(OnMergeEvent);
         SubscribeLocalEvent<CardsComponent, StackSplitEvent>(OnSplitEvent);
         SubscribeLocalEvent<CardsComponent, GetVerbsEvent<AlternativeVerb>>(OnCardsAlternativeInteract);
+        SubscribeLocalEvent<CardsComponent, ComponentStartup>(OnCardsStarted);
 
         SubscribeLocalEvent<CardsComponent, ActivateInWorldEvent>(OnCardsActivate);
         SubscribeLocalEvent<CardsComponent, UseInHandEvent>(OnCardsUse);
+    }
+
+    private void OnCardsStarted(Entity<CardsComponent> ent, ref ComponentStartup args)
+    {
+        if (!TryComp(ent.Owner, out AppearanceComponent? appearance))
+            return;
+
+        Appearance.SetData(ent.Owner, CardVisuals.CardList, ent.Comp.Cards, appearance);
+        Appearance.SetData(ent.Owner, CardVisuals.IsFlipped, ent.Comp.Flipped, appearance);
+        Appearance.SetData(ent.Owner, CardVisuals.IsFanned, ent.Comp.Fanned, appearance);
     }
 
     private void OnMergeEvent(Entity<CardsComponent> ent, ref MergeEvent args)
@@ -97,7 +108,12 @@ public abstract partial class SharedCardSystem : EntitySystem
     private void MoveCards(CardsComponent comp1, CardsComponent comp2, List<ProtoId<CardPrototype>> selected)
     {
         selected.ForEach(item => comp2.Cards.Remove(item));
-        comp1.Cards = selected.Concat(comp1.Cards).ToList();
+        if (comp1.Flipped)
+            comp1.Cards = comp1.Cards.Concat(selected).ToList();
+        else
+        {
+            comp1.Cards = selected.Concat(comp1.Cards).ToList();
+        }
 
         var logString = "movedCards ";
         selected.ForEach(item => logString += $"{item}");
@@ -217,6 +233,7 @@ public abstract partial class SharedCardSystem : EntitySystem
         cards.Comp.Flipped = cards.Comp.Flipped ^ true;
         cards.Comp.Fanned = false;
         Log.Info("Flipped");
+        Appearance.SetData(cards, CardVisuals.CardList, GetCardListVisualState(cards.Comp));
         Appearance.SetData(cards, CardVisuals.IsFlipped, cards.Comp.Flipped);
         Appearance.SetData(cards, CardVisuals.IsFanned, cards.Comp.Fanned);
         Dirty(cards.Owner, cards.Comp);
@@ -227,6 +244,7 @@ public abstract partial class SharedCardSystem : EntitySystem
     {
         cards.Comp.Fanned = cards.Comp.Fanned ^ true;
         Log.Info("Fanned");
+        Appearance.SetData(cards, CardVisuals.CardList, GetCardListVisualState(cards.Comp));
         Appearance.SetData(cards, CardVisuals.IsFanned, cards.Comp.Fanned);
         Dirty(cards.Owner, cards.Comp);
         return true;
@@ -286,16 +304,12 @@ public abstract partial class SharedCardSystem : EntitySystem
         return true;
     }
 
-    private CardListVisualState GetCardListVisualState(CardsComponent cards)
+    protected CardListVisualState GetCardListVisualState(CardsComponent cards)
     {
-        if (cards.Flipped)
-            return new CardListVisualState(new List<ProtoId<CardPrototype>>([]));
+        if (!cards.Flipped)
+            return new CardListVisualState(new List<ProtoId<CardPrototype>>());
         if (cards.Fanned)
-        {
             return new CardListVisualState(cards.Cards);
-        }
-        if (cards.Cards.Count != 0)
-            return new CardListVisualState(new List<ProtoId<CardPrototype>> { cards.Cards.Last() });
-        return new CardListVisualState(new List<ProtoId<CardPrototype>>([]));
+        return new CardListVisualState(cards.Cards.TakeLast(1).ToList());
     }
 }

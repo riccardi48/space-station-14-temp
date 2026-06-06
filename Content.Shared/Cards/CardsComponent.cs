@@ -21,4 +21,8 @@ public sealed partial class CardsComponent : Component
 
     [DataField, AutoNetworkedField]
     public SoundSpecifier ShuffleSound = new SoundPathSpecifier("/Audio/Effects/cardshuffle.ogg");
+
+    [DataField, AutoNetworkedField]
+    public string BaseState = "sc_base";
+
 }

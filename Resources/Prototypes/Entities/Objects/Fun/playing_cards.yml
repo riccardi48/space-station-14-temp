@@ -2,7 +2,7 @@
   parent: BaseItem
   id: BaseCards
   name: cards
-  hideSpawnMenu: true
+  categories: [ HideSpawnMenu ]
   components:
   - type: Cards
     cards: []
@@ -28,6 +28,8 @@
       map: ["base"]
   - type: Item
     sprite: Objects/Fun/PlayingCards/nanotrasenbasiccards.rsi
+    size: Normal
+  - type: Appearance
 
 - type: entity
   parent: BaseCards
