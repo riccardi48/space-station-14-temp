@@ -37,6 +37,7 @@ public abstract partial class SharedCardSystem : EntitySystem
 
         Appearance.SetData(ent.Owner, CardVisuals.CardList, ent.Comp.Cards, appearance);
         Appearance.SetData(ent.Owner, CardVisuals.IsFlipped, ent.Comp.Flipped, appearance);
+        Appearance.SetData(ent.Owner, CardVisuals.IsFanned, ent.Comp.Fanned, appearance);
     }
 
     private void OnMergeEvent(Entity<CardsComponent> ent, ref MergeEvent args)
@@ -92,6 +93,7 @@ public abstract partial class SharedCardSystem : EntitySystem
         {
             Appearance.SetData(args.NewId, CardVisuals.CardList, GetCardListVisualState(splitComp), appearance);
             Appearance.SetData(args.NewId, CardVisuals.IsFlipped, splitComp.Flipped, appearance);
+            Appearance.SetData(args.NewId, CardVisuals.IsFanned, splitComp.Fanned, appearance);
         }
         Dirty(ent.Owner, ent.Comp);
         Dirty(args.NewId, splitComp);
@@ -235,6 +237,7 @@ public abstract partial class SharedCardSystem : EntitySystem
         Log.Info("Flipped");
         Appearance.SetData(cards, CardVisuals.CardList, GetCardListVisualState(cards.Comp));
         Appearance.SetData(cards, CardVisuals.IsFlipped, cards.Comp.Flipped);
+        Appearance.SetData(cards, CardVisuals.IsFanned, cards.Comp.Fanned);
         Dirty(cards.Owner, cards.Comp);
         return true;
     }
@@ -244,6 +247,7 @@ public abstract partial class SharedCardSystem : EntitySystem
         cards.Comp.Fanned = cards.Comp.Fanned ^ true;
         Log.Info("Fanned");
         Appearance.SetData(cards, CardVisuals.CardList, GetCardListVisualState(cards.Comp));
+        Appearance.SetData(cards, CardVisuals.IsFanned, cards.Comp.Fanned);
         Dirty(cards.Owner, cards.Comp);
         return true;
     }
@@ -293,6 +297,7 @@ public abstract partial class SharedCardSystem : EntitySystem
         {
             Appearance.SetData(split, CardVisuals.CardList, GetCardListVisualState(newCardsComp), appearance);
             Appearance.SetData(split, CardVisuals.IsFlipped, newCardsComp.Flipped, appearance);
+            Appearance.SetData(split, CardVisuals.IsFanned, newCardsComp.Fanned, appearance);
         }
 
         Dirty(cards.Owner, cards.Comp);

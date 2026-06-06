@@ -95,6 +95,7 @@ public sealed partial class CardSystem : SharedCardSystem
         {
             Appearance.SetData(ent, CardVisuals.CardList, GetCardListVisualState(cardsComp), appearance);
             Appearance.SetData(ent, CardVisuals.IsFlipped, cardsComp.Flipped, appearance);
+            Appearance.SetData(ent, CardVisuals.IsFanned, cardsComp.Fanned, appearance);
         }
         _sprite.SetVisible((ent, spriteComp), false);
         return ent;
@@ -107,6 +108,9 @@ public sealed partial class CardSystem : SharedCardSystem
 
         if (!Appearance.TryGetData<CardListVisualState>(uid, CardVisuals.CardList, out var visualState, args.Component))
             visualState = new CardListVisualState(new List<ProtoId<CardPrototype>>());
+
+        if (!Appearance.TryGetData<bool>(uid, CardVisuals.IsFanned, out var fanned, args.Component))
+            fanned = false;
 
         if (
             !TryComp<SpriteComponent>(uid, out var sprite)
@@ -128,30 +132,51 @@ public sealed partial class CardSystem : SharedCardSystem
         Appearance.SetData(uid, StackVisuals.Hide, false, args.Component);
 
         _sprite.LayerSetVisible((uid, sprite), "base", false);
-        for (var i = 0; i < visualState.CardList.Count; i++)
+        CardPrototype? prototype;
+        if (fanned)
         {
-            if (!_prototypeManager.TryIndex<CardPrototype>(visualState.CardList[i].Id, out var prototype))
-                continue; // was: return
-            _sprite.LayerMapReserve((uid, sprite), $"card_{i * 3}");
-            _sprite.LayerMapReserve((uid, sprite), $"card_{i * 3 + 1}");
-            _sprite.LayerMapReserve((uid, sprite), $"card_{i * 3 + 2}");
-            TransformCard(
-                $"card_{i * 3}",
-                $"card_{i * 3 + 1}",
-                $"card_{i * 3 + 2}",
-                new Vector2((-visualState.CardList.Count / 2 + i) * 0.1f, 0),
-                new Angle(0),
-                (uid, sprite)
-            );
-            BuildCard(
-                prototype,
-                $"card_{i * 3}",
-                component.BaseState,
-                $"card_{i * 3 + 1}",
-                $"card_{i * 3 + 2}",
-                (uid, sprite)
-            );
+            var count = visualState.CardList.Count;
+            for (var i = 0; i < count; i++)
+            {
+                if (!_prototypeManager.TryIndex<CardPrototype>(visualState.CardList[i].Id, out prototype))
+                    continue;
+                _sprite.LayerMapReserve((uid, sprite), $"card_{i * 3}");
+                _sprite.LayerMapReserve((uid, sprite), $"card_{i * 3 + 1}");
+                _sprite.LayerMapReserve((uid, sprite), $"card_{i * 3 + 2}");
+                var angle = (i - count / 2.0 + 0.5) / count * Math.PI;
+                var radius = (float)Math.Sqrt(count / 20f);
+                if (count == 1)
+                    radius = 0;
+                TransformCard(
+                    $"card_{i * 3}",
+                    $"card_{i * 3 + 1}",
+                    $"card_{i * 3 + 2}",
+                    new Vector2(
+                        (float)Math.Sin(angle) * radius,
+                        (float)Math.Cos(angle) * radius - (radius * (3f / 4f))
+                    ),
+                    new Angle(-angle),
+                    (uid, sprite)
+                );
+                BuildCard(
+                    prototype,
+                    $"card_{i * 3}",
+                    component.BaseState,
+                    $"card_{i * 3 + 1}",
+                    $"card_{i * 3 + 2}",
+                    (uid, sprite)
+                );
+            }
+            return;
         }
+        var id = visualState.CardList.FirstOrDefault().Id;
+        if (id == null || !_prototypeManager.TryIndex<CardPrototype>(id, out prototype))
+            return;
+        _sprite.LayerMapReserve((uid, sprite), "card_0");
+        _sprite.LayerMapReserve((uid, sprite), "card_1");
+        _sprite.LayerMapReserve((uid, sprite), "card_2");
+        TransformCard("card_0", "card_1", "card_2", new Vector2(0, 0), new Angle(0), (uid, sprite));
+        BuildCard(prototype, "card_0", component.BaseState, "card_1", "card_2", (uid, sprite));
     }
 
     public void BuildCard(

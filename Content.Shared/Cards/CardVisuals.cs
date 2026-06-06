@@ -7,6 +7,7 @@ namespace Content.Shared.Cards;
 public enum CardVisuals : byte
 {
     IsFlipped,
+    IsFanned,
     CardList,
 }
 
