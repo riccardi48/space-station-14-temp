@@ -1,7 +1,6 @@
 # Clubs
 - type: card
   id: Ace_of_Clubs
-  layerTwoColor: black
   layerTwoState: sc_Ace_of_Clubs
   layerTwoColor: black
 
@@ -92,9 +91,8 @@
 # Diamonds
 - type: card
   id: Ace_of_Diamonds
-  layerOneColor: red
   layerTwoState: sc_Ace_of_Diamonds
-  layerOneColor: red
+  layerTwoColor: red
 
 - type: card
   id: 2_of_Diamonds
@@ -183,9 +181,8 @@
 # Hearts
 - type: card
   id: Ace_of_Hearts
-  layerOneColor: red
   layerTwoState: sc_Ace_of_Hearts
-  layerOneColor: red
+  layerTwoColor: red
 
 - type: card
   id: 2_of_Hearts
@@ -274,90 +271,89 @@
 # Spades
 - type: card
   id: Ace_of_Spades
-  layerTwoColor: black
   layerTwoState: sc_Ace_of_Spades
   layerTwoColor: black
 
 - type: card
   id: 2_of_Spades
   layerOneState: sc_Spades
-  layerTwoColor: black
+  layerOneColor: black
   layerTwoState: sc_2
   layerTwoColor: black
 
 - type: card
   id: 3_of_Spades
   layerOneState: sc_Spades
-  layerTwoColor: black
+  layerOneColor: black
   layerTwoState: sc_3
   layerTwoColor: black
 
 - type: card
   id: 4_of_Spades
   layerOneState: sc_Spades
-  layerTwoColor: black
+  layerOneColor: black
   layerTwoState: sc_4
   layerTwoColor: black
 
 - type: card
   id: 5_of_Spades
   layerOneState: sc_Spades
-  layerTwoColor: black
+  layerOneColor: black
   layerTwoState: sc_5
   layerTwoColor: black
 
 - type: card
   id: 6_of_Spades
   layerOneState: sc_Spades
-  layerTwoColor: black
+  layerOneColor: black
   layerTwoState: sc_6
   layerTwoColor: black
 
 - type: card
   id: 7_of_Spades
   layerOneState: sc_Spades
-  layerTwoColor: black
+  layerOneColor: black
   layerTwoState: sc_7
   layerTwoColor: black
 
 - type: card
   id: 8_of_Spades
   layerOneState: sc_Spades
-  layerTwoColor: black
+  layerOneColor: black
   layerTwoState: sc_8
   layerTwoColor: black
 
 - type: card
   id: 9_of_Spades
   layerOneState: sc_Spades
-  layerTwoColor: black
+  layerOneColor: black
   layerTwoState: sc_9
   layerTwoColor: black
 
 - type: card
   id: 10_of_Spades
   layerOneState: sc_Spades
-  layerTwoColor: black
+  layerOneColor: black
   layerTwoState: sc_10
   layerTwoColor: black
 
 - type: card
   id: Jack_of_Spades
   layerOneState: sc_Spades
-  layerTwoColor: black
+  layerOneColor: black
   layerTwoState: sc_Jack
   layerTwoColor: black
 
 - type: card
   id: Queen_of_Spades
   layerOneState: sc_Spades
-  layerTwoColor: black
+  layerOneColor: black
   layerTwoState: sc_Queen
   layerTwoColor: black
 
 - type: card
   id: King_of_Spades
   layerOneState: sc_Spades
-  layerTwoColor: black
+  layerOneColor: black
   layerTwoState: sc_King
   layerTwoColor: black
