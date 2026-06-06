@@ -28,9 +28,6 @@ public sealed partial class CardSystem : SharedCardSystem
     [Dependency]
     private IPrototypeManager _prototypeManager = default!;
 
-    [Dependency]
-    private IGameTiming _timing = default!;
-
     public override void Initialize()
     {
         base.Initialize();

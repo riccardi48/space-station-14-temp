@@ -10,6 +10,7 @@ using Robust.Shared.Audio.Systems;
 using Robust.Shared.Containers;
 using Robust.Shared.Player;
 using Robust.Shared.Prototypes;
+using Robust.Shared.Timing;
 
 namespace Content.Shared.Cards;
 
@@ -28,10 +29,13 @@ public abstract partial class SharedCardSystem : EntitySystem
     protected SharedAppearanceSystem Appearance = default!;
 
     [Dependency]
-    private SharedAudioSystem _audio = default!;
+    protected SharedAudioSystem _audio = default!;
 
     [Dependency]
-    private SharedContainerSystem _container = default!;
+    protected SharedContainerSystem _container = default!;
+
+    [Dependency]
+    protected IGameTiming _timing = default!;
 
     public override void Initialize()
     {

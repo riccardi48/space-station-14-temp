@@ -31,6 +31,7 @@ public abstract partial class SharedStackSystem : EntitySystem
     [Dependency] private SharedPhysicsSystem _physics = default!;
     [Dependency] protected SharedPopupSystem Popup = default!;
     [Dependency] private SharedStorageSystem _storage = default!;
+    [Dependency] protected IGameTiming _timing = default!;
 
     // TODO: These should be in the prototype.
     public static readonly int[] DefaultSplitAmounts = { 1, 5, 10, 20, 30, 50 };
@@ -244,12 +245,12 @@ public abstract partial class SharedStackSystem : EntitySystem
             && TryMergeStacks((stack.Owner, stack.Comp), (recipient.Value, recipientStack), out var transferred, amount: amount))
             return;
 
-        if (Split(stack.AsNullable(), amount, user.Comp.Coordinates) is not { } split)
+        if (Split(stack.AsNullable(), amount, new EntityCoordinates(user.Owner, Vector2.Zero)) is not { } split)
             return;
 
         Hands.PickupOrDrop(user.Owner, split);
-
-        Popup.PopupCursor(Loc.GetString("comp-stack-split"), user.Owner);
+        if (!_timing.ApplyingState)
+            Popup.PopupCursor(Loc.GetString("comp-stack-split"), user.Owner);
     }
 
     /// <summary>
@@ -275,6 +276,7 @@ public abstract partial class SharedStackSystem : EntitySystem
 
         // Set the output parameter in the event instance to the newly split stack.
         var newEntity = PredictedSpawnAtPosition(stackType.Spawn, spawnPosition);
+        Xform.SetParent(newEntity, spawnPosition.EntityId);
 
         // There should always be a StackComponent
         var stackComp = Comp<StackComponent>(newEntity);
