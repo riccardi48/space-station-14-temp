@@ -1,4 +1,5 @@
 using System.Linq;
+using Content.Shared.Hands.Components;
 using Content.Shared.Hands.EntitySystems;
 using Content.Shared.Interaction;
 using Content.Shared.Interaction.Events;
@@ -6,17 +7,30 @@ using Content.Shared.Popups;
 using Content.Shared.Stacks;
 using Content.Shared.Verbs;
 using Robust.Shared.Audio.Systems;
+using Robust.Shared.Containers;
 using Robust.Shared.Prototypes;
 
 namespace Content.Shared.Cards;
 
 public abstract partial class SharedCardSystem : EntitySystem
 {
-    [Dependency] protected SharedStackSystem Stacks = default!;
-    [Dependency] protected SharedHandsSystem Hands = default!;
-    [Dependency] protected SharedPopupSystem Popup = default!;
-    [Dependency] protected SharedAppearanceSystem Appearance = default!;
-    [Dependency] private SharedAudioSystem _audio = default!;
+    [Dependency]
+    protected SharedStackSystem Stacks = default!;
+
+    [Dependency]
+    protected SharedHandsSystem Hands = default!;
+
+    [Dependency]
+    protected SharedPopupSystem Popup = default!;
+
+    [Dependency]
+    protected SharedAppearanceSystem Appearance = default!;
+
+    [Dependency]
+    private SharedAudioSystem _audio = default!;
+
+    [Dependency]
+    private SharedContainerSystem _container = default!;
 
     public override void Initialize()
     {
@@ -28,6 +42,7 @@ public abstract partial class SharedCardSystem : EntitySystem
 
         SubscribeLocalEvent<CardsComponent, ActivateInWorldEvent>(OnCardsActivate);
         SubscribeLocalEvent<CardsComponent, UseInHandEvent>(OnCardsUse);
+        SubscribeLocalEvent<CardsComponent, EntGotInsertedIntoContainerMessage>(OnCardsContainerInserted);
     }
 
     private void OnCardsStarted(Entity<CardsComponent> ent, ref ComponentStartup args)
@@ -97,6 +112,15 @@ public abstract partial class SharedCardSystem : EntitySystem
         }
         Dirty(ent.Owner, ent.Comp);
         Dirty(args.NewId, splitComp);
+    }
+
+    private void OnCardsContainerInserted(Entity<CardsComponent> ent, ref EntGotInsertedIntoContainerMessage args)
+    {
+        Log.Info($"{args.Container.ID}");
+        if (ent.Comp.Fanned && !Hands.EnumerateHands(args.Container.Owner).ToList().Contains(args.Container.ID))
+        {
+            TryFanCards(ent);
+        }
     }
 
     private void TakeFromDeck(CardsComponent comp1, CardsComponent comp2, int delta)
@@ -176,12 +200,17 @@ public abstract partial class SharedCardSystem : EntitySystem
             Text = Loc.GetString("comp-cards-shuffle"),
             Act = () => TryShuffleCards(ent),
             Priority = -99,
-            CloseMenu = false,
         };
 
         args.Verbs.Add(shuffle);
 
-        if (ent.Comp.Flipped)
+        if (
+            ent.Comp.Flipped
+            && (
+                !_container.TryGetContainingContainer(ent.Owner, out var container)
+                || Hands.EnumerateHands(container.Owner).ToList().Contains(container.ID)
+            )
+        )
         {
             AlternativeVerb fan = new()
             {
@@ -198,14 +227,14 @@ public abstract partial class SharedCardSystem : EntitySystem
             var priority = -200;
             for (var i = 0; i < ent.Comp.Cards.Count; i++)
             {
-                var card = ent.Comp.Cards[i];
+                var index = ent.Comp.Cards.Count - i - 1;
+                var card = ent.Comp.Cards[index];
                 var cardName = $"{card}";
-                var index = i;
 
                 Log.Info($"{i} {ent.Comp.Cards.Count}");
                 AlternativeVerb take = new()
                 {
-                    Text = cardName,
+                    Text = Loc.GetString(cardName.Replace('_', '-')),
                     Act = () => TryTakeCard(ent, user, index),
                     Category = VerbCategory.TakeCard,
                     Priority = priority,
@@ -267,9 +296,11 @@ public abstract partial class SharedCardSystem : EntitySystem
             return false;
         }
 
-        if (Hands.TryGetActiveItem(user.Owner, out var recipient)
+        if (
+            Hands.TryGetActiveItem(user.Owner, out var recipient)
             && TryComp<StackComponent>(recipient, out var recipientStack)
-            && Stacks.TryMergeStacks((cards.Owner, stackComp), (recipient.Value, recipientStack), out _, amount: 1))
+            && Stacks.TryMergeStacks((cards.Owner, stackComp), (recipient.Value, recipientStack), out _, amount: 1)
+        )
             return Abort();
 
         if (Stacks.Split((cards.Owner, stackComp), 1, user.Comp.Coordinates) is not { } split)

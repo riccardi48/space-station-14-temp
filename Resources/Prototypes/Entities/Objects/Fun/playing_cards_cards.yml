@@ -1,88 +1,88 @@
 # Clubs
 - type: card
-  id: Ace_of_Clubs
+  id: ace_of_clubs
   layerTwoState: sc_Ace_of_Clubs
   layerTwoColor: black
 
 - type: card
-  id: 2_of_Clubs
+  id: two_of_clubs
   layerOneState: sc_Clubs
   layerOneColor: black
   layerTwoState: sc_2
   layerTwoColor: black
 
 - type: card
-  id: 3_of_Clubs
+  id: three_of_clubs
   layerOneState: sc_Clubs
   layerOneColor: black
   layerTwoState: sc_3
   layerTwoColor: black
 
 - type: card
-  id: 4_of_Clubs
+  id: four_of_clubs
   layerOneState: sc_Clubs
   layerOneColor: black
   layerTwoState: sc_4
   layerTwoColor: black
 
 - type: card
-  id: 5_of_Clubs
+  id: five_of_clubs
   layerOneState: sc_Clubs
   layerOneColor: black
   layerTwoState: sc_5
   layerTwoColor: black
 
 - type: card
-  id: 6_of_Clubs
+  id: six_of_clubs
   layerOneState: sc_Clubs
   layerOneColor: black
   layerTwoState: sc_6
   layerTwoColor: black
 
 - type: card
-  id: 7_of_Clubs
+  id: seven_of_clubs
   layerOneState: sc_Clubs
   layerOneColor: black
   layerTwoState: sc_7
   layerTwoColor: black
 
 - type: card
-  id: 8_of_Clubs
+  id: eight_of_clubs
   layerOneState: sc_Clubs
   layerOneColor: black
   layerTwoState: sc_8
   layerTwoColor: black
 
 - type: card
-  id: 9_of_Clubs
+  id: nine_of_clubs
   layerOneState: sc_Clubs
   layerOneColor: black
   layerTwoState: sc_9
   layerTwoColor: black
 
 - type: card
-  id: 10_of_Clubs
+  id: ten_of_clubs
   layerOneState: sc_Clubs
   layerOneColor: black
   layerTwoState: sc_10
   layerTwoColor: black
 
 - type: card
-  id: Jack_of_Clubs
+  id: jack_of_clubs
   layerOneState: sc_Clubs
   layerOneColor: black
   layerTwoState: sc_Jack
   layerTwoColor: black
 
 - type: card
-  id: Queen_of_Clubs
+  id: queen_of_clubs
   layerOneState: sc_Clubs
   layerOneColor: black
   layerTwoState: sc_Queen
   layerTwoColor: black
 
 - type: card
-  id: King_of_Clubs
+  id: king_of_clubs
   layerOneState: sc_Clubs
   layerOneColor: black
   layerTwoState: sc_King
@@ -90,89 +90,89 @@
 
 # Diamonds
 - type: card
-  id: Ace_of_Diamonds
+  id: ace_of_diamonds
   layerTwoState: sc_Ace_of_Diamonds
   layerTwoColor: red
 
 - type: card
-  id: 2_of_Diamonds
+  id: two_of_diamonds
   layerOneState: sc_Diamonds
   layerOneColor: red
   layerTwoState: sc_2
   layerTwoColor: red
 
 - type: card
-  id: 3_of_Diamonds
+  id: three_of_diamonds
   layerOneState: sc_Diamonds
   layerOneColor: red
   layerTwoState: sc_3
   layerTwoColor: red
 
 - type: card
-  id: 4_of_Diamonds
+  id: four_of_diamonds
   layerOneState: sc_Diamonds
   layerOneColor: red
   layerTwoState: sc_4
   layerTwoColor: red
 
 - type: card
-  id: 5_of_Diamonds
+  id: five_of_diamonds
   layerOneState: sc_Diamonds
   layerOneColor: red
   layerTwoState: sc_5
   layerTwoColor: red
 
 - type: card
-  id: 6_of_Diamonds
+  id: six_of_diamonds
   layerOneState: sc_Diamonds
   layerOneColor: red
   layerTwoState: sc_6
   layerTwoColor: red
 
 - type: card
-  id: 7_of_Diamonds
+  id: seven_of_diamonds
   layerOneState: sc_Diamonds
   layerOneColor: red
   layerTwoState: sc_7
   layerTwoColor: red
 
 - type: card
-  id: 8_of_Diamonds
+  id: eight_of_diamonds
   layerOneState: sc_Diamonds
   layerOneColor: red
   layerTwoState: sc_8
   layerTwoColor: red
 
 - type: card
-  id: 9_of_Diamonds
+  id: nine_of_diamonds
   layerOneState: sc_Diamonds
   layerOneColor: red
   layerTwoState: sc_9
   layerTwoColor: red
 
 - type: card
-  id: 10_of_Diamonds
+  id: ten_of_diamonds
   layerOneState: sc_Diamonds
   layerOneColor: red
   layerTwoState: sc_10
   layerTwoColor: red
 
 - type: card
-  id: Jack_of_Diamonds
+  id: jack_of_diamonds
   layerOneState: sc_Diamonds
   layerOneColor: red
   layerTwoState: sc_Jack
   layerTwoColor: red
 
 - type: card
-  id: Queen_of_Diamonds
+  id: queen_of_diamonds
   layerOneState: sc_Diamonds
   layerOneColor: red
   layerTwoState: sc_Queen
   layerTwoColor: red
 
 - type: card
-  id: King_of_Diamonds
+  id: king_of_diamonds
   layerOneState: sc_Diamonds
   layerOneColor: red
   layerTwoState: sc_King
@@ -180,89 +180,89 @@
 
 # Hearts
 - type: card
-  id: Ace_of_Hearts
+  id: ace_of_hearts
   layerTwoState: sc_Ace_of_Hearts
   layerTwoColor: red
 
 - type: card
-  id: 2_of_Hearts
+  id: two_of_hearts
   layerOneState: sc_Hearts
   layerOneColor: red
   layerTwoState: sc_2
   layerTwoColor: red
 
 - type: card
-  id: 3_of_Hearts
+  id: three_of_hearts
   layerOneState: sc_Hearts
   layerOneColor: red
   layerTwoState: sc_3
   layerTwoColor: red
 
 - type: card
-  id: 4_of_Hearts
+  id: four_of_hearts
   layerOneState: sc_Hearts
   layerOneColor: red
   layerTwoState: sc_4
   layerTwoColor: red
 
 - type: card
-  id: 5_of_Hearts
+  id: five_of_hearts
   layerOneState: sc_Hearts
   layerOneColor: red
   layerTwoState: sc_5
   layerTwoColor: red
 
 - type: card
-  id: 6_of_Hearts
+  id: six_of_hearts
   layerOneState: sc_Hearts
   layerOneColor: red
   layerTwoState: sc_6
   layerTwoColor: red
 
 - type: card
-  id: 7_of_Hearts
+  id: seven_of_hearts
   layerOneState: sc_Hearts
   layerOneColor: red
   layerTwoState: sc_7
   layerTwoColor: red
 
 - type: card
-  id: 8_of_Hearts
+  id: eight_of_hearts
   layerOneState: sc_Hearts
   layerOneColor: red
   layerTwoState: sc_8
   layerTwoColor: red
 
 - type: card
-  id: 9_of_Hearts
+  id: nine_of_hearts
   layerOneState: sc_Hearts
   layerOneColor: red
   layerTwoState: sc_9
   layerTwoColor: red
 
 - type: card
-  id: 10_of_Hearts
+  id: ten_of_hearts
   layerOneState: sc_Hearts
   layerOneColor: red
   layerTwoState: sc_10
   layerTwoColor: red
 
 - type: card
-  id: Jack_of_Hearts
+  id: jack_of_hearts
   layerOneState: sc_Hearts
   layerOneColor: red
   layerTwoState: sc_Jack
   layerTwoColor: red
 
 - type: card
-  id: Queen_of_Hearts
+  id: queen_of_hearts
   layerOneState: sc_Hearts
   layerOneColor: red
   layerTwoState: sc_Queen
   layerTwoColor: red
 
 - type: card
-  id: King_of_Hearts
+  id: king_of_hearts
   layerOneState: sc_Hearts
   layerOneColor: red
   layerTwoState: sc_King
@@ -270,89 +270,89 @@
 
 # Spades
 - type: card
-  id: Ace_of_Spades
+  id: ace_of_spades
   layerTwoState: sc_Ace_of_Spades
   layerTwoColor: black
 
 - type: card
-  id: 2_of_Spades
+  id: two_of_spades
   layerOneState: sc_Spades
   layerOneColor: black
   layerTwoState: sc_2
   layerTwoColor: black
 
 - type: card
-  id: 3_of_Spades
+  id: three_of_spades
   layerOneState: sc_Spades
   layerOneColor: black
   layerTwoState: sc_3
   layerTwoColor: black
 
 - type: card
-  id: 4_of_Spades
+  id: four_of_spades
   layerOneState: sc_Spades
   layerOneColor: black
   layerTwoState: sc_4
   layerTwoColor: black
 
 - type: card
-  id: 5_of_Spades
+  id: five_of_spades
   layerOneState: sc_Spades
   layerOneColor: black
   layerTwoState: sc_5
   layerTwoColor: black
 
 - type: card
-  id: 6_of_Spades
+  id: six_of_spades
   layerOneState: sc_Spades
   layerOneColor: black
   layerTwoState: sc_6
   layerTwoColor: black
 
 - type: card
-  id: 7_of_Spades
+  id: seven_of_spades
   layerOneState: sc_Spades
   layerOneColor: black
   layerTwoState: sc_7
   layerTwoColor: black
 
 - type: card
-  id: 8_of_Spades
+  id: eight_of_spades
   layerOneState: sc_Spades
   layerOneColor: black
   layerTwoState: sc_8
   layerTwoColor: black
 
 - type: card
-  id: 9_of_Spades
+  id: nine_of_spades
   layerOneState: sc_Spades
   layerOneColor: black
   layerTwoState: sc_9
   layerTwoColor: black
 
 - type: card
-  id: 10_of_Spades
+  id: ten_of_spades
   layerOneState: sc_Spades
   layerOneColor: black
   layerTwoState: sc_10
   layerTwoColor: black
 
 - type: card
-  id: Jack_of_Spades
+  id: jack_of_spades
   layerOneState: sc_Spades
   layerOneColor: black
   layerTwoState: sc_Jack
   layerTwoColor: black
 
 - type: card
-  id: Queen_of_Spades
+  id: queen_of_spades
   layerOneState: sc_Spades
   layerOneColor: black
   layerTwoState: sc_Queen
   layerTwoColor: black
 
 - type: card
-  id: King_of_Spades
+  id: king_of_spades
   layerOneState: sc_Spades
   layerOneColor: black
   layerTwoState: sc_King
