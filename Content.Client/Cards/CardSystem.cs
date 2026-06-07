@@ -1,6 +1,5 @@
 using System.Linq;
 using System.Numerics;
-using Content.Client.Salvage.UI;
 using Content.Shared.Cards;
 using Content.Shared.Stacks;
 using Content.Shared.Storage.EntitySystems;
@@ -8,7 +7,6 @@ using JetBrains.Annotations;
 using Robust.Client.GameObjects;
 using Robust.Shared.Map;
 using Robust.Shared.Prototypes;
-using Robust.Shared.Timing;
 
 namespace Content.Client.Cards;
 
