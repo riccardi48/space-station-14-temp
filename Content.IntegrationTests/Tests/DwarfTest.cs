@@ -12,8 +12,6 @@ public sealed class DwarfTest : GameTest
     [Description("Checks that dwarfs are still in the game")]
     public async Task DwarfsNotRemovedTest()
     {
-        await Pair.CreateTestMap();
-
         await Server.WaitAssertion(() =>
         {
             if (!SProtoMan.TryIndex<SpeciesPrototype>(Dwarf, out var dwarfPrototype))
