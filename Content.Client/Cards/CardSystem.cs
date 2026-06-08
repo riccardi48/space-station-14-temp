@@ -107,7 +107,7 @@ public sealed partial class CardSystem : SharedCardSystem
     private static float FanRadius(int count) => count <= 1 ? 0f : (float)Math.Sqrt(count / 20f);
 
     private static (string Base, string LayerOne, string LayerTwo) CardLayers(int i) =>
-        ($"card_{i * 3}", $"card_{i * 3 + 1}", $"card_{i * 3 + 2}");
+        ($"card_{i}_base", $"card_{i}_layerOne", $"card_{i}_layerTwo");
 
     private void PlaceCard(
         int i,
