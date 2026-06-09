@@ -9,9 +9,6 @@ public abstract partial class SharedCardSystem
 {
     private void OnCardsStarted(Entity<CardsComponent> ent, ref ComponentStartup args)
     {
-        if (!TryComp(ent.Owner, out AppearanceComponent? appearance))
-            return;
-
         UpdateVisualState(ent);
     }
 
@@ -56,15 +53,9 @@ public abstract partial class SharedCardSystem
 
     protected CardListVisualState GetCardListVisualState(CardsComponent cards)
     {
-        if (!cards.Flipped)
-        {
-            if (cards.Fanned)
-                return new CardListVisualState(cards.Cards.Take(cards.MaxFanned).ToList());
-            return new CardListVisualState(cards.Cards.Take(1).ToList());
-        }
-        if (cards.Fanned)
-            return new CardListVisualState(cards.Cards.TakeLast(cards.MaxFanned).ToList());
-        return new CardListVisualState(cards.Cards.TakeLast(1).ToList());
+        var count = cards.Fanned ? cards.MaxFanned : 1;
+        var selected = cards.Flipped ? cards.Cards.TakeLast(count) : cards.Cards.Take(count);
+        return new CardListVisualState(selected.ToList());
     }
 
     protected void PlayCardDrawAnimation(Entity<CardsComponent> merger, Entity<CardsComponent> mergee, int delta)
