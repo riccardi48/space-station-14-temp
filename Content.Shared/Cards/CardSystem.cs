@@ -8,7 +8,6 @@ using Content.Shared.Stacks;
 using Content.Shared.Verbs;
 using Robust.Shared.Audio.Systems;
 using Robust.Shared.Containers;
-using Robust.Shared.Prototypes;
 using Robust.Shared.Timing;
 
 namespace Content.Shared.Cards;
@@ -28,13 +27,13 @@ public abstract partial class SharedCardSystem : EntitySystem
     protected SharedAppearanceSystem Appearance = default!;
 
     [Dependency]
-    protected SharedAudioSystem _audio = default!;
+    protected SharedAudioSystem Audio = default!;
 
     [Dependency]
-    protected SharedContainerSystem _container = default!;
+    protected SharedContainerSystem Container = default!;
 
     [Dependency]
-    protected IGameTiming _timing = default!;
+    protected IGameTiming Timing = default!;
 
     public override void Initialize()
     {
@@ -49,6 +48,7 @@ public abstract partial class SharedCardSystem : EntitySystem
         SubscribeLocalEvent<CardsComponent, ActivateInWorldEvent>(OnCardsActivate);
         SubscribeLocalEvent<CardsComponent, UseInHandEvent>(OnCardsUse);
         SubscribeLocalEvent<CardsComponent, EntGotInsertedIntoContainerMessage>(OnCardsContainerInserted);
+        SubscribeLocalEvent<CardsComponent, StackCountChangedEvent>(OnStackCountChanged);
     }
 
     private void OnCardsInit(Entity<CardsComponent> ent, ref ComponentInit args)
@@ -56,15 +56,6 @@ public abstract partial class SharedCardSystem : EntitySystem
         ent.Comp.Cards = ent
             .Comp._cards.Select(protoId => new CardData(protoId, ent.Comp.BaseState, ent.Comp.CardBack))
             .ToList();
-    }
-
-    private void OnCardsStarted(Entity<CardsComponent> ent, ref ComponentStartup args)
-    {
-        if (!TryComp(ent.Owner, out AppearanceComponent? appearance))
-            return;
-
-        Appearance.SetData(ent.Owner, CardVisuals.CardList, GetCardListVisualState(ent.Comp), appearance);
-        Appearance.SetData(ent.Owner, CardVisuals.IsFlipped, ent.Comp.Flipped, appearance);
     }
 
     private void OnMergeEvent(Entity<CardsComponent> ent, ref MergeEvent args)
@@ -81,30 +72,12 @@ public abstract partial class SharedCardSystem : EntitySystem
             PlayCardDrawAnimation(ent, (args.Mergee, mergeeComp), args.Delta);
         TakeFromDeck(ent.Comp, mergeeComp, args.Delta);
 
-        Appearance.SetData(ent, CardVisuals.CardList, GetCardListVisualState(ent.Comp));
-        Appearance.SetData(args.Mergee, CardVisuals.CardList, GetCardListVisualState(mergeeComp));
+        UpdateVisualState(ent);
+        UpdateVisualState((args.Mergee, mergeeComp));
 
         Dirty(ent.Owner, ent.Comp);
         Dirty(args.Mergee, mergeeComp);
     }
-
-    protected void PlayCardDrawAnimation(Entity<CardsComponent> merger, Entity<CardsComponent> mergee, int delta)
-    {
-        var selected = MovedCards(mergee.Comp, delta);
-        PlayCardAnimation(merger, mergee, selected);
-    }
-
-    protected void PlayCardTakeAnimation(Entity<CardsComponent> merger, Entity<CardsComponent> mergee, int cardInx)
-    {
-        List<CardData> selected = new List<CardData> { mergee.Comp.Cards[cardInx] };
-        PlayCardAnimation(merger, mergee, selected);
-    }
-
-    protected abstract void PlayCardAnimation(
-        Entity<CardsComponent> merger,
-        Entity<CardsComponent> mergee,
-        List<CardData> selected
-    );
 
     private void OnSplitEvent(Entity<CardsComponent> ent, ref StackSplitEvent args)
     {
@@ -121,12 +94,9 @@ public abstract partial class SharedCardSystem : EntitySystem
         TakeFromDeck(splitComp, ent.Comp, delta);
         splitComp.Flipped = ent.Comp.Flipped;
         splitComp.Fanned = ent.Comp.Fanned;
-        Appearance.SetData(ent, CardVisuals.CardList, GetCardListVisualState(ent.Comp));
-        if (TryComp<AppearanceComponent>(args.NewId, out var appearance))
-        {
-            Appearance.SetData(args.NewId, CardVisuals.CardList, GetCardListVisualState(splitComp), appearance);
-            Appearance.SetData(args.NewId, CardVisuals.IsFlipped, splitComp.Flipped, appearance);
-        }
+        UpdateVisualState(ent);
+        UpdateVisualState((args.NewId, splitComp));
+
         Dirty(ent.Owner, ent.Comp);
         Dirty(args.NewId, splitComp);
     }
@@ -163,125 +133,16 @@ public abstract partial class SharedCardSystem : EntitySystem
         return comp.Cards.Take(delta).ToList();
     }
 
-    private void OnCardsActivate(Entity<CardsComponent> ent, ref ActivateInWorldEvent args)
-    {
-        if (args.Handled || !args.Complex)
-            return;
-
-        args.Handled = true;
-        TryFlipCards(ent);
-    }
-
-    private void OnCardsUse(Entity<CardsComponent> ent, ref UseInHandEvent args)
-    {
-        if (args.Handled)
-            return;
-
-        args.Handled = true;
-        if (ent.Comp.Flipped && !ent.Comp.Fanned)
-        {
-            TryFanCards(ent);
-        }
-        else if (ent.Comp.Fanned)
-        {
-            TryFanCards(ent);
-            TryFlipCards(ent);
-        }
-        else
-        {
-            TryFlipCards(ent);
-        }
-    }
-
-    private void OnCardsAlternativeInteract(Entity<CardsComponent> ent, ref GetVerbsEvent<AlternativeVerb> args)
-    {
-        if (!args.CanAccess || !args.CanInteract || !args.CanComplexInteract || args.Hands == null)
-            return;
-
-        var user = args.User;
-
-        AlternativeVerb flip = new()
-        {
-            Text = Loc.GetString("comp-cards-flip"),
-            Act = () => TryFlipCards(ent),
-            Priority = -98,
-        };
-        args.Verbs.Add(flip);
-
-        AlternativeVerb shuffle = new()
-        {
-            Text = Loc.GetString("comp-cards-shuffle"),
-            Act = () => TryShuffleCards(ent),
-            Priority = -99,
-        };
-
-        args.Verbs.Add(shuffle);
-
-        if (
-            (
-                !_container.TryGetContainingContainer(ent.Owner, out var container)
-                || Hands.EnumerateHands(container.Owner).ToList().Contains(container.ID)
-            )
-        )
-        {
-            AlternativeVerb fan = new()
-            {
-                Text = Loc.GetString("comp-cards-fan"),
-                Act = () => TryFanCards(ent),
-                Priority = -100,
-            };
-
-            args.Verbs.Add(fan);
-        }
-
-        if (ent.Comp.Fanned && Hands.GetActiveItem(user) != ent.Owner)
-        {
-            var priority = -200;
-            for (var i = 0; i < ent.Comp.Cards.Count; i++)
-            {
-                var index = ent.Comp.Cards.Count - i - 1;
-                var card = ent.Comp.Cards[index];
-                var cardName = $"{card.CardId}";
-
-                // Want this to have icon of the card
-                // Not sure is possible
-                AlternativeVerb take = new()
-                {
-                    Text = Loc.GetString(cardName.Replace('_', '-')),
-                    Act = () => TryTakeCard(ent, user, index, out var _),
-                    Category = VerbCategory.TakeCard,
-                    Priority = priority,
-                };
-
-                priority--;
-
-                args.Verbs.Add(take);
-            }
-        }
-    }
-
-    private void OnCardsExamined(Entity<CardsComponent> ent, ref ExaminedEvent args)
-    {
-        if (!args.IsInDetailsRange)
-            return;
-
-        if (ent.Comp.Flipped)
-        {
-            var cards = GetCardListVisualState(ent.Comp);
-            var cardName = (string)cards.CardList.Last().CardId;
-            args.PushMarkup(
-                Loc.GetString("comp-cards-examine-detail", ("card", Loc.GetString(cardName.Replace('_', '-'))))
-            );
-        }
-    }
-
     public bool TryShuffleCards(Entity<CardsComponent> cards)
     {
         // This should probably be predicted but it kinda plays a shuffle animation during catchup frames because it isn't predicted.
         // Maybe fine to not predict this then.
         cards.Comp.Cards = cards.Comp.Cards.Shuffle().ToList();
-        Appearance.SetData(cards, CardVisuals.CardList, GetCardListVisualState(cards.Comp));
-        _audio.PlayPredicted(cards.Comp.ShuffleSound, cards, null);
+
+        UpdateVisualState(cards);
+
+        Audio.PlayPredicted(cards.Comp.ShuffleSound, cards, null);
+
         Dirty(cards.Owner, cards.Comp);
         return true;
     }
@@ -289,13 +150,9 @@ public abstract partial class SharedCardSystem : EntitySystem
     public bool TryFlipCards(Entity<CardsComponent> cards)
     {
         cards.Comp.Flipped = cards.Comp.Flipped ^ true;
-        // cards.Comp.Fanned = false;
 
-        if (TryComp<AppearanceComponent>(cards, out var appearance))
-        {
-            Appearance.SetData(cards, CardVisuals.CardList, GetCardListVisualState(cards.Comp));
-            Appearance.SetData(cards, CardVisuals.IsFlipped, cards.Comp.Flipped);
-        }
+        UpdateVisualState(cards);
+
         Dirty(cards.Owner, cards.Comp);
         return true;
     }
@@ -304,10 +161,8 @@ public abstract partial class SharedCardSystem : EntitySystem
     {
         cards.Comp.Fanned = cards.Comp.Fanned ^ true;
 
-        if (TryComp<AppearanceComponent>(cards, out var appearance))
-        {
-            Appearance.SetData(cards, CardVisuals.CardList, GetCardListVisualState(cards.Comp), appearance);
-        }
+        UpdateVisualState(cards);
+        UpdateStackCount(cards);
 
         Dirty(cards.Owner, cards.Comp);
         return true;
@@ -362,29 +217,12 @@ public abstract partial class SharedCardSystem : EntitySystem
         Hands.PickupOrDrop(user.Owner, split.Value);
         Popup.PopupCursor(Loc.GetString("comp-stack-split"), user.Owner);
 
-        Appearance.SetData(cards, CardVisuals.CardList, GetCardListVisualState(cards.Comp));
-        if (TryComp<AppearanceComponent>(split, out var appearance))
-        {
-            Appearance.SetData(split.Value, CardVisuals.CardList, GetCardListVisualState(newCardsComp), appearance);
-            Appearance.SetData(split.Value, CardVisuals.IsFlipped, newCardsComp.Flipped, appearance);
-        }
+        UpdateVisualState(cards);
+        UpdateVisualState((split.Value, newCardsComp));
 
         Dirty(cards.Owner, cards.Comp);
         Dirty(split.Value, newCardsComp);
 
         return true;
-    }
-
-    protected CardListVisualState GetCardListVisualState(CardsComponent cards)
-    {
-        if (!cards.Flipped)
-        {
-            if (cards.Fanned)
-                return new CardListVisualState(cards.Cards.Take(cards.MaxFanned).ToList());
-            return new CardListVisualState(cards.Cards.Take(1).ToList());
-        }
-        if (cards.Fanned)
-            return new CardListVisualState(cards.Cards.TakeLast(cards.MaxFanned).ToList());
-        return new CardListVisualState(cards.Cards.TakeLast(1).ToList());
     }
 }

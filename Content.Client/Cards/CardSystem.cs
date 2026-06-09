@@ -51,7 +51,7 @@ public sealed partial class CardSystem : SharedCardSystem
         List<CardData> selected
     )
     {
-        if (_timing.ApplyingState)
+        if (Timing.ApplyingState)
             return;
         var mergeeCoords = Transform(mergee.Owner).Coordinates;
         var mergerCoords = Transform(merger.Owner).Coordinates;
