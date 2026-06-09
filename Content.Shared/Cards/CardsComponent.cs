@@ -8,7 +8,7 @@ namespace Content.Shared.Cards;
 public sealed partial class CardsComponent : Component
 {
     [DataField("cards", required: true)]
-    internal List<ProtoId<CardPrototype>> _cards { get; private set; }
+    public List<ProtoId<CardPrototype>> _cards { get; set; }
 
     [ViewVariables, AutoNetworkedField]
     public List<CardData> Cards { get; set; } = new();
@@ -27,9 +27,6 @@ public sealed partial class CardsComponent : Component
 
     [DataField, AutoNetworkedField]
     public SoundSpecifier ShuffleSound = new SoundPathSpecifier("/Audio/Effects/cardshuffle.ogg");
-
-    [DataField, AutoNetworkedField]
-    public string SingleCard = "deck_nanotrasen_single";
 
     [DataField, AutoNetworkedField]
     public string BaseState = "sc_base";

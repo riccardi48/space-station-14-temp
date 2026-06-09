@@ -69,7 +69,12 @@ public sealed partial class CardSystem : SharedCardSystem
         List<CardData> selected
     )
     {
-        var ent = Spawn("BaseCards", mergeeCoords);
+        if (
+            !TryComp<StackComponent>(mergee.Owner, out var originalStackComp)
+            || !_prototypeManager.TryIndex(originalStackComp.StackTypeId, out var newStack)
+        )
+            return EntityUid.Invalid;
+        var ent = Spawn(newStack.Spawn, mergeeCoords);
         if (
             !TryComp<CardsComponent>(ent, out var cardsComp)
             || !TryComp<StackComponent>(ent, out var stackComp)
@@ -86,7 +91,6 @@ public sealed partial class CardSystem : SharedCardSystem
         {
             Appearance.SetData(ent, CardVisuals.CardList, GetCardListVisualState(cardsComp), appearance);
             Appearance.SetData(ent, CardVisuals.IsFlipped, cardsComp.Flipped, appearance);
-            Appearance.SetData(ent, CardVisuals.IsFanned, cardsComp.Fanned, appearance);
 
             var ev = new AppearanceChangeEvent
             {
@@ -108,19 +112,9 @@ public sealed partial class CardSystem : SharedCardSystem
     private static (string Base, string LayerOne, string LayerTwo) CardLayers(int i) =>
         ($"card_{i}_base", $"card_{i}_layerOne", $"card_{i}_layerTwo");
 
-    private void PlaceCard(
-        int i,
-        CardPrototype prototype,
-        string baseSprite,
-        Entity<SpriteComponent?> sprite,
-        Vector2 offset,
-        Angle rotation
-    ) { }
-
     private void OnAppearanceChanged(EntityUid uid, CardsComponent component, ref AppearanceChangeEvent args)
     {
         Appearance.TryGetData<bool>(uid, CardVisuals.IsFlipped, out var flipped, args.Component);
-        Appearance.TryGetData<bool>(uid, CardVisuals.IsFanned, out var fanned, args.Component);
 
         if (!Appearance.TryGetData<CardListVisualState>(uid, CardVisuals.CardList, out var visualState, args.Component))
             visualState = new CardListVisualState(new List<CardData>());
@@ -138,7 +132,6 @@ public sealed partial class CardSystem : SharedCardSystem
             _sprite.RemoveLayer((uid, sprite), layerTwo, false);
         }
 
-
         var count = visualState.CardList.Count;
         var radius = FanRadius(count);
         for (var i = 0; i < count; i++)
@@ -152,17 +145,16 @@ public sealed partial class CardSystem : SharedCardSystem
             var rotation = new Angle(-angle);
 
             _sprite.LayerMapReserve((uid, sprite), baseLayer);
-            _sprite.LayerMapReserve((uid, sprite), layerOne);
-            _sprite.LayerMapReserve((uid, sprite), layerTwo);
             if (!flipped)
             {
                 BuildLayer(baseLayer, card.CardBack, null, (uid, sprite));
                 TransformLayer(baseLayer, position, rotation, (uid, sprite));
-                _sprite.LayerSetVisible((uid, sprite), layerOne, false);
-                _sprite.LayerSetVisible((uid, sprite), layerTwo, false);
             }
             else
             {
+                _sprite.LayerMapReserve((uid, sprite), layerOne);
+                _sprite.LayerMapReserve((uid, sprite), layerTwo);
+
                 BuildCard(prototype, baseLayer, card.BaseState, layerOne, layerTwo, (uid, sprite));
                 TransformLayer(baseLayer, position, rotation, (uid, sprite));
                 TransformLayer(layerOne, position, rotation, (uid, sprite));

@@ -41,11 +41,17 @@ public abstract partial class SharedCardSystem : EntitySystem
         SubscribeLocalEvent<CardsComponent, MergeEvent>(OnMergeEvent);
         SubscribeLocalEvent<CardsComponent, StackSplitEvent>(OnSplitEvent);
         SubscribeLocalEvent<CardsComponent, GetVerbsEvent<AlternativeVerb>>(OnCardsAlternativeInteract);
+        SubscribeLocalEvent<CardsComponent, ComponentInit>(OnCardsInit);
         SubscribeLocalEvent<CardsComponent, ComponentStartup>(OnCardsStarted);
 
         SubscribeLocalEvent<CardsComponent, ActivateInWorldEvent>(OnCardsActivate);
         SubscribeLocalEvent<CardsComponent, UseInHandEvent>(OnCardsUse);
         SubscribeLocalEvent<CardsComponent, EntGotInsertedIntoContainerMessage>(OnCardsContainerInserted);
+    }
+
+    private void OnCardsInit(Entity<CardsComponent> ent, ref ComponentInit args)
+    {
+        ent.Comp.Cards = ent.Comp._cards.Select(protoId => new CardData(protoId, ent.Comp.BaseState, ent.Comp.CardBack)).ToList();
     }
 
     private void OnCardsStarted(Entity<CardsComponent> ent, ref ComponentStartup args)
@@ -55,11 +61,6 @@ public abstract partial class SharedCardSystem : EntitySystem
 
         Appearance.SetData(ent.Owner, CardVisuals.CardList, GetCardListVisualState(ent.Comp), appearance);
         Appearance.SetData(ent.Owner, CardVisuals.IsFlipped, ent.Comp.Flipped, appearance);
-        Appearance.SetData(ent.Owner, CardVisuals.IsFanned, ent.Comp.Fanned, appearance);
-
-        ent.Comp.Cards = ent
-            .Comp._cards.Select(protoId => new CardData(protoId, ent.Comp.BaseState, ent.Comp.CardBack))
-            .ToList();
     }
 
     private void OnMergeEvent(Entity<CardsComponent> ent, ref MergeEvent args)
@@ -79,7 +80,6 @@ public abstract partial class SharedCardSystem : EntitySystem
         if (ent.Comp.Fanned == true && ent.Comp.Cards.Count > ent.Comp.MaxFanned)
         {
             ent.Comp.Fanned = false;
-            Appearance.SetData(ent, CardVisuals.IsFanned, ent.Comp.Fanned);
         }
         Appearance.SetData(ent, CardVisuals.CardList, GetCardListVisualState(ent.Comp));
         Appearance.SetData(args.Mergee, CardVisuals.CardList, GetCardListVisualState(mergeeComp));
@@ -126,7 +126,6 @@ public abstract partial class SharedCardSystem : EntitySystem
         {
             Appearance.SetData(args.NewId, CardVisuals.CardList, GetCardListVisualState(splitComp), appearance);
             Appearance.SetData(args.NewId, CardVisuals.IsFlipped, splitComp.Flipped, appearance);
-            Appearance.SetData(args.NewId, CardVisuals.IsFanned, splitComp.Fanned, appearance);
         }
         Dirty(ent.Owner, ent.Comp);
         Dirty(args.NewId, splitComp);
@@ -180,7 +179,10 @@ public abstract partial class SharedCardSystem : EntitySystem
 
         args.Handled = true;
         if (ent.Comp.Flipped && !ent.Comp.Fanned)
+        {
             TryFanCards(ent);
+            TryFlipCards(ent);
+        }
         else
         {
             TryFlipCards(ent);
@@ -269,9 +271,12 @@ public abstract partial class SharedCardSystem : EntitySystem
     {
         cards.Comp.Flipped = cards.Comp.Flipped ^ true;
         // cards.Comp.Fanned = false;
-        Appearance.SetData(cards, CardVisuals.CardList, GetCardListVisualState(cards.Comp));
-        Appearance.SetData(cards, CardVisuals.IsFlipped, cards.Comp.Flipped);
-        Appearance.SetData(cards, CardVisuals.IsFanned, cards.Comp.Fanned);
+
+        if (TryComp<AppearanceComponent>(cards, out var appearance))
+        {
+            Appearance.SetData(cards, CardVisuals.CardList, GetCardListVisualState(cards.Comp));
+            Appearance.SetData(cards, CardVisuals.IsFlipped, cards.Comp.Flipped);
+        }
         Dirty(cards.Owner, cards.Comp);
         return true;
     }
@@ -279,8 +284,12 @@ public abstract partial class SharedCardSystem : EntitySystem
     public bool TryFanCards(Entity<CardsComponent> cards)
     {
         cards.Comp.Fanned = cards.Comp.Fanned ^ true;
-        Appearance.SetData(cards, CardVisuals.CardList, GetCardListVisualState(cards.Comp));
-        Appearance.SetData(cards, CardVisuals.IsFanned, cards.Comp.Fanned);
+
+        if (TryComp<AppearanceComponent>(cards, out var appearance))
+        {
+            Appearance.SetData(cards, CardVisuals.CardList, GetCardListVisualState(cards.Comp), appearance);
+        }
+
         Dirty(cards.Owner, cards.Comp);
         return true;
     }
@@ -339,7 +348,6 @@ public abstract partial class SharedCardSystem : EntitySystem
         {
             Appearance.SetData(split.Value, CardVisuals.CardList, GetCardListVisualState(newCardsComp), appearance);
             Appearance.SetData(split.Value, CardVisuals.IsFlipped, newCardsComp.Flipped, appearance);
-            Appearance.SetData(split.Value, CardVisuals.IsFanned, newCardsComp.Fanned, appearance);
         }
 
         Dirty(cards.Owner, cards.Comp);
@@ -360,5 +368,4 @@ public abstract partial class SharedCardSystem : EntitySystem
             return new CardListVisualState(cards.Cards.TakeLast(cards.MaxFanned).ToList());
         return new CardListVisualState(cards.Cards.TakeLast(1).ToList());
     }
-
 }

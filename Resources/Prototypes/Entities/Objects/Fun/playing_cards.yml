@@ -1,7 +1,7 @@
 - type: entity
   parent: BaseItem
   id: BaseCards
-  name: cards
+  name: Deck of Cards
   categories: [ HideSpawnMenu ]
   components:
   - type: Cards
@@ -12,7 +12,7 @@
     baseLayer: base
     halfOnAltInteract: false
     layerStates:
-    - deck_nanotrasen_single
+    - deck_single
     - deck_nanotrasen_low
     - deck_nanotrasen_half
     - deck_nanotrasen_full
@@ -23,20 +23,19 @@
     thresholds: [2, 20, 35]
   - type: Sprite
     sprite: Objects/Fun/PlayingCards/nanotrasenbasiccards.rsi
-    state: deck_nanotrasen_single
+    state: deck_single
     layers:
-    - state: deck_nanotrasen_single
+    - state: deck_single
       map: ["base"]
   - type: Item
     sprite: Objects/Fun/PlayingCards/nanotrasenbasiccards.rsi
     size: Normal
-    state: sc_backside
+    state: deck_single
   - type: Appearance
 
 - type: entity
-  parent: BaseCards
-  id: cardDeck
-  name: Deck of Cards
+  id: standardDeck
+  categories: [ HideSpawnMenu ]
   components:
     - type: Cards
       cards:
@@ -92,13 +91,60 @@
         - jack_of_spades
         - queen_of_spades
         - king_of_spades
+
+
+- type: entity
+  parent: [standardDeck, BaseCards]
+  id: cardDeck
+  name: Deck of Cards
+  components:
     - type: Stack
       count: 52
     - type: Sprite
       state: deck_nanotrasen_full
 
+
+- type: entity
+  parent: [standardDeck, syndiBaseCards, BaseSyndicateContraband]
+  id: syndiCards
+  name: Deck of Syndicate Cards
+
+- type: entity
+  parent: BaseCards
+  id: syndiBaseCards
+  name: Deck of Syndicate Cards
+  categories: [ HideSpawnMenu ]
+  components:
+    - type: Cards
+      cardBack: syndi_backside
+      baseState: syndi_base
+    - type: Stack
+      stackType: SyndicateCardsStack
+      layerStates:
+      - deck_single
+      - deck_syndicate_low
+      - deck_syndicate_half
+      - deck_syndicate_full
+      count: 52
+    - type: Sprite
+      state: deck_syndicate_full
+    - type: DamageOtherOnHit
+      damage:
+        types:
+          Piercing: 15
+    - type: EmbeddableProjectile
+      offset: 0.0,0.0
+    - type: LandAtCursor
+
+
 - type: stack
   id: CardsStack
   maxCount: 52
   spawn: BaseCards
-  icon: { sprite: /Textures/Objects/Fun/PlayingCards/nanotrasenbasiccards.rsi, state: deck_nanotrasen_single }
+  icon: { sprite: /Textures/Objects/Fun/PlayingCards/nanotrasenbasiccards.rsi, state: deck_single }
+
+- type: stack
+  id: SyndicateCardsStack
+  maxCount: 52
+  spawn: syndiBaseCards
+  icon: { sprite: /Textures/Objects/Fun/PlayingCards/nanotrasenbasiccards.rsi, state: deck_single }
