@@ -10,6 +10,7 @@ public abstract partial class SharedCardSystem
     private void OnCardsStarted(Entity<CardsComponent> ent, ref ComponentStartup args)
     {
         UpdateVisualState(ent);
+        UpdateStackCount(ent);
     }
 
     private void OnCardsExamined(Entity<CardsComponent> ent, ref ExaminedEvent args)

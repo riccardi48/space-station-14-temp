@@ -65,12 +65,8 @@ public abstract partial class SharedCardSystem : EntitySystem
             return;
         if (!TryComp<CardsComponent>(args.Mergee, out var mergeeComp))
             return;
-        if (args.Delta <= 0)
-            return;
 
-        if (args.TargetDelta != null)
-            PlayCardDrawAnimation(ent, (args.Mergee, mergeeComp), args.Delta);
-
+        PlayCardDrawAnimation(ent, (args.Mergee, mergeeComp), args.Delta);
         TakeFromDeck(ent.Comp, mergeeComp, args.Delta);
         UpdateVisualState(ent);
         UpdateVisualState((args.Mergee, mergeeComp));
@@ -126,7 +122,7 @@ public abstract partial class SharedCardSystem : EntitySystem
     private List<CardData> MovedCards(CardsComponent comp, int delta)
     {
         if (comp.Flipped)
-            return comp.Cards.Skip(Math.Max(0, comp.Cards.Count - delta)).ToList();
+            return comp.Cards.TakeLast(delta).ToList();
         return comp.Cards.Take(delta).ToList();
     }
 

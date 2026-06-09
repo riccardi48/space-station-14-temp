@@ -104,9 +104,11 @@ public abstract partial class SharedStackSystem : EntitySystem
                 Popup.PopupClient(Loc.GetString("comp-stack-already-full"), popupPos, args.User);
                 break;
         }
-
-        var localRotation = Transform(args.Used).LocalRotation;
-        _storage.PlayPickupAnimation(args.Used, popupPos, userCoords, localRotation, args.User);
+        if (ent.Comp.AnimatePickup)
+        {
+            var localRotation = Transform(args.Used).LocalRotation;
+            _storage.PlayPickupAnimation(args.Used, popupPos, userCoords, localRotation, args.User);
+        }
     }
 
     private void OnStackStarted(Entity<StackComponent> ent, ref ComponentStartup args)

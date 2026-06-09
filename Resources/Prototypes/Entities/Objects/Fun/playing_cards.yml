@@ -11,6 +11,7 @@
     stackType: CardsStack
     baseLayer: base
     halfOnAltInteract: false
+    animatePickup: false
     layerStates:
     - deck_single
     - deck_nanotrasen_low
@@ -92,7 +93,6 @@
         - queen_of_spades
         - king_of_spades
 
-
 - type: entity
   parent: [standardDeck, BaseCards]
   id: cardDeck
@@ -108,6 +108,8 @@
   maxCount: 52
   spawn: BaseCards
   icon: { sprite: /Textures/Objects/Fun/PlayingCards/nanotrasenbasiccards.rsi, state: deck_single }
+
+
 
 - type: entity
   parent: [standardDeck, syndiBaseCards]
@@ -141,7 +143,6 @@
     - type: EmbeddableProjectile
       offset: 0.0,0.0
     - type: LandAtCursor
-
 
 - type: stack
   id: SyndicateCardsStack

@@ -70,7 +70,7 @@ public abstract partial class SharedStackSystem
 
         // passing amount as a hack to get around split logic only being server side
         // if amount is not null this was called during a split stack action
-        var mergeEvent = new MergeEvent(recipient, donor, transferred, amount);
+        var mergeEvent = new MergeEvent(recipient, donor, transferred);
         RaiseLocalEvent(recipient, ref mergeEvent, true);
 
         SetCount(donor, donor.Comp.Count - transferred);

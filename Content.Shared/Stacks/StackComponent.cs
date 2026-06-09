@@ -89,6 +89,8 @@ public sealed partial class StackComponent : Component
     [DataField]
     public bool HalfOnAltInteract = true;
 
+    [DataField]
+    public bool AnimatePickup = true;
 }
 
 [Serializable, NetSerializable]
