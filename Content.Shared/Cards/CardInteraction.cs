@@ -22,14 +22,15 @@ public abstract partial class SharedCardSystem
             return;
 
         args.Handled = true;
-        if (ent.Comp.Flipped && !ent.Comp.Fanned)
-        {
-            TryFanCards(ent);
-        }
-        else if (ent.Comp.Fanned)
+
+        if (ent.Comp.Fanned)
         {
             TryFanCards(ent);
             TryFlipCards(ent);
+        }
+        else if (ent.Comp.Flipped)
+        {
+            TryFanCards(ent);
         }
         else
         {
@@ -44,40 +45,38 @@ public abstract partial class SharedCardSystem
 
         var user = args.User;
 
-        AlternativeVerb flip = new()
-        {
-            Text = Loc.GetString("comp-cards-flip"),
-            Act = () => TryFlipCards(ent),
-            Priority = -98,
-        };
-        args.Verbs.Add(flip);
+        args.Verbs.Add(
+            new AlternativeVerb
+            {
+                Text = Loc.GetString("comp-cards-flip"),
+                Act = () => TryFlipCards(ent),
+                Priority = -98,
+            }
+        );
 
-        AlternativeVerb shuffle = new()
-        {
-            Text = Loc.GetString("comp-cards-shuffle"),
-            Act = () => TryShuffleCards(ent),
-            Priority = -99,
-        };
-
-        args.Verbs.Add(shuffle);
+        args.Verbs.Add(
+            new AlternativeVerb
+            {
+                Text = Loc.GetString("comp-cards-shuffle"),
+                Act = () => TryShuffleCards(ent),
+                Priority = -99,
+            }
+        );
 
         if (
-            (
-                !Container.TryGetContainingContainer(ent.Owner, out var container)
-                || Hands.EnumerateHands(container.Owner).ToList().Contains(container.ID)
-            )
+            !Container.TryGetContainingContainer(ent.Owner, out var container)
+            || Hands.EnumerateHands(container.Owner).Contains(container.ID)
         )
         {
-            AlternativeVerb fan = new()
-            {
-                Text = Loc.GetString("comp-cards-fan"),
-                Act = () => TryFanCards(ent),
-                Priority = -100,
-            };
-
-            args.Verbs.Add(fan);
+            args.Verbs.Add(
+                new AlternativeVerb
+                {
+                    Text = Loc.GetString("comp-cards-fan"),
+                    Act = () => TryFanCards(ent),
+                    Priority = -100,
+                }
+            );
         }
-
         if (ent.Comp.Fanned && Hands.GetActiveItem(user) != ent.Owner)
         {
             var priority = -200;
@@ -85,21 +84,16 @@ public abstract partial class SharedCardSystem
             {
                 var index = ent.Comp.Cards.Count - i - 1;
                 var card = ent.Comp.Cards[index];
-                var cardName = $"{card.CardId}";
 
-                // Want this to have icon of the card
-                // Not sure is possible
-                AlternativeVerb take = new()
-                {
-                    Text = Loc.GetString(cardName.Replace('_', '-')),
-                    Act = () => TryTakeCard(ent, user, index, out var _),
-                    Category = VerbCategory.TakeCard,
-                    Priority = priority,
-                };
-
-                priority--;
-
-                args.Verbs.Add(take);
+                args.Verbs.Add(
+                    new AlternativeVerb
+                    {
+                        Text = Loc.GetString(card.CardId.ToString().Replace('_', '-')),
+                        Act = () => TryTakeCard(ent, user, index, out _),
+                        Category = VerbCategory.TakeCard,
+                        Priority = priority--,
+                    }
+                );
             }
         }
     }

@@ -38,10 +38,12 @@ public sealed partial class CardSystem : SharedCardSystem
     {
         var merger = GetEntity(args.Merger);
         var mergee = GetEntity(args.Mergee);
+
         if (
             !TryComp<CardsComponent>(merger, out var mergerComp) || !TryComp<CardsComponent>(mergee, out var mergeeComp)
         )
             return;
+
         PlayCardAnimation((merger, mergerComp), (mergee, mergeeComp), args.Selected);
     }
 
@@ -53,13 +55,18 @@ public sealed partial class CardSystem : SharedCardSystem
     {
         if (Timing.ApplyingState)
             return;
-        var mergeeCoords = Transform(mergee.Owner).Coordinates;
-        var mergerCoords = Transform(merger.Owner).Coordinates;
-        var localRotation = Transform(mergee.Owner).LocalRotation;
-        var ent = SpawnTempClone(mergee, mergeeCoords, selected);
+
+        var mergeeXform = Transform(mergee.Owner);
+        var ent = SpawnTempClone(mergee, mergeeXform.Coordinates, selected);
         if (ent == EntityUid.Invalid)
             return;
-        _storage.PlayPickupAnimation(ent, mergeeCoords, mergerCoords, localRotation);
+
+        _storage.PlayPickupAnimation(
+            ent,
+            mergeeXform.Coordinates,
+            Transform(merger.Owner).Coordinates,
+            mergeeXform.LocalRotation
+        );
         QueueDel(ent);
     }
 
@@ -74,7 +81,9 @@ public sealed partial class CardSystem : SharedCardSystem
             || !_prototypeManager.TryIndex(originalStackComp.StackTypeId, out var newStack)
         )
             return EntityUid.Invalid;
+
         var ent = Spawn(newStack.Spawn, mergeeCoords);
+
         if (
             !TryComp<CardsComponent>(ent, out var cardsComp)
             || !TryComp<StackComponent>(ent, out var stackComp)
@@ -84,9 +93,11 @@ public sealed partial class CardSystem : SharedCardSystem
             QueueDel(ent);
             return EntityUid.Invalid;
         }
+
         cardsComp.Cards = selected;
         cardsComp.Flipped = mergee.Comp.Flipped;
         Stacks.SetCount((ent, stackComp), cardsComp.Cards.Count);
+
         if (TryComp<AppearanceComponent>(ent, out var appearance))
         {
             Appearance.SetData(ent, CardVisuals.CardList, GetCardListVisualState(cardsComp), appearance);
@@ -100,12 +111,13 @@ public sealed partial class CardSystem : SharedCardSystem
             };
             RaiseLocalEvent(ent, ref ev);
         }
+
         _sprite.SetVisible((ent, spriteComp), false);
         return ent;
     }
 
     private static Vector2 FanPosition(double angle, float radius) =>
-        new((float)Math.Sin(angle) * radius, (float)Math.Cos(angle) * radius - radius * (3 / 4f));
+        new((float)Math.Sin(angle) * radius, (float)Math.Cos(angle) * radius - radius * (3f / 4f));
 
     private static float FanRadius(int count) => count <= 1 ? 0f : (float)Math.Sqrt(count / 20f);
 
@@ -134,36 +146,36 @@ public sealed partial class CardSystem : SharedCardSystem
 
         var count = visualState.CardList.Count;
         var radius = FanRadius(count);
+
         for (var i = 0; i < count; i++)
         {
             var card = visualState.CardList[i];
             var (baseLayer, layerOne, layerTwo) = CardLayers(i);
+
             if (!_prototypeManager.TryIndex<CardPrototype>(card.CardId, out var prototype))
                 continue;
+
             var angle = (i - count / 2.0 + 0.5) / count * Math.PI;
             var position = FanPosition(angle, radius);
             var rotation = new Angle(-angle);
 
             _sprite.LayerMapReserve((uid, sprite), baseLayer);
-            if (!flipped)
-            {
-                BuildLayer(baseLayer, card.CardBack, null, (uid, sprite));
-                TransformLayer(baseLayer, position, rotation, (uid, sprite));
-            }
-            else
-            {
-                _sprite.LayerMapReserve((uid, sprite), layerOne);
-                _sprite.LayerMapReserve((uid, sprite), layerTwo);
+            _sprite.LayerMapReserve((uid, sprite), layerOne);
+            _sprite.LayerMapReserve((uid, sprite), layerTwo);
 
+            if (flipped)
+            {
                 BuildCard(prototype, baseLayer, card.BaseState, layerOne, layerTwo, (uid, sprite));
-                TransformLayer(baseLayer, position, rotation, (uid, sprite));
                 TransformLayer(layerOne, position, rotation, (uid, sprite));
                 TransformLayer(layerTwo, position, rotation, (uid, sprite));
             }
+            else
+                BuildLayer(baseLayer, card.CardBack, null, (uid, sprite));
+
+            TransformLayer(baseLayer, position, rotation, (uid, sprite));
+
             if (i == 0)
-            {
                 TransformLayer("base", position, rotation, (uid, sprite));
-            }
         }
     }
 
@@ -177,21 +189,16 @@ public sealed partial class CardSystem : SharedCardSystem
     )
     {
         BuildLayer(baseLayer, baseSprite, null, sprite);
-
         BuildLayer(layerOne, prototype.LayerOneState, prototype.LayerOneColor, sprite);
-
         BuildLayer(layerTwo, prototype.LayerTwoState, prototype.LayerTwoColor, sprite);
     }
 
     public void BuildLayer(string layer, string? layerState, Color? layerColor, Entity<SpriteComponent?> sprite)
     {
-        if (layer != null)
-        {
-            _sprite.LayerSetVisible(sprite, layer, true);
-            _sprite.LayerSetRsiState(sprite, layer, layerState);
-            if (layerColor != null)
-                _sprite.LayerSetColor(sprite, layer, layerColor.Value);
-        }
+        _sprite.LayerSetVisible(sprite, layer, true);
+        _sprite.LayerSetRsiState(sprite, layer, layerState);
+        if (layerColor != null)
+            _sprite.LayerSetColor(sprite, layer, layerColor.Value);
     }
 
     public void TransformLayer(string layer, Vector2 movement, Angle rotation, Entity<SpriteComponent?> sprite)

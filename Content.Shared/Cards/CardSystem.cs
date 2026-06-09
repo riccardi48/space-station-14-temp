@@ -38,17 +38,18 @@ public abstract partial class SharedCardSystem : EntitySystem
     public override void Initialize()
     {
         base.Initialize();
+        SubscribeLocalEvent<CardsComponent, ComponentInit>(OnCardsInit);
         SubscribeLocalEvent<CardsComponent, MergeEvent>(OnMergeEvent);
         SubscribeLocalEvent<CardsComponent, StackSplitEvent>(OnSplitEvent);
-        SubscribeLocalEvent<CardsComponent, GetVerbsEvent<AlternativeVerb>>(OnCardsAlternativeInteract);
-        SubscribeLocalEvent<CardsComponent, ComponentInit>(OnCardsInit);
+        SubscribeLocalEvent<CardsComponent, EntGotInsertedIntoContainerMessage>(OnCardsContainerInserted);
+
         SubscribeLocalEvent<CardsComponent, ComponentStartup>(OnCardsStarted);
         SubscribeLocalEvent<CardsComponent, ExaminedEvent>(OnCardsExamined);
+        SubscribeLocalEvent<CardsComponent, StackCountChangedEvent>(OnStackCountChanged);
 
         SubscribeLocalEvent<CardsComponent, ActivateInWorldEvent>(OnCardsActivate);
         SubscribeLocalEvent<CardsComponent, UseInHandEvent>(OnCardsUse);
-        SubscribeLocalEvent<CardsComponent, EntGotInsertedIntoContainerMessage>(OnCardsContainerInserted);
-        SubscribeLocalEvent<CardsComponent, StackCountChangedEvent>(OnStackCountChanged);
+        SubscribeLocalEvent<CardsComponent, GetVerbsEvent<AlternativeVerb>>(OnCardsAlternativeInteract);
     }
 
     private void OnCardsInit(Entity<CardsComponent> ent, ref ComponentInit args)
@@ -62,16 +63,15 @@ public abstract partial class SharedCardSystem : EntitySystem
     {
         if (ent.Comp.BeingCherryPicked)
             return;
-
         if (!TryComp<CardsComponent>(args.Mergee, out var mergeeComp))
             return;
-
         if (args.Delta <= 0)
             return;
+
         if (args.TargetDelta != null)
             PlayCardDrawAnimation(ent, (args.Mergee, mergeeComp), args.Delta);
-        TakeFromDeck(ent.Comp, mergeeComp, args.Delta);
 
+        TakeFromDeck(ent.Comp, mergeeComp, args.Delta);
         UpdateVisualState(ent);
         UpdateVisualState((args.Mergee, mergeeComp));
 
@@ -94,6 +94,7 @@ public abstract partial class SharedCardSystem : EntitySystem
         TakeFromDeck(splitComp, ent.Comp, delta);
         splitComp.Flipped = ent.Comp.Flipped;
         splitComp.Fanned = ent.Comp.Fanned;
+
         UpdateVisualState(ent);
         UpdateVisualState((args.NewId, splitComp));
 
@@ -103,10 +104,8 @@ public abstract partial class SharedCardSystem : EntitySystem
 
     private void OnCardsContainerInserted(Entity<CardsComponent> ent, ref EntGotInsertedIntoContainerMessage args)
     {
-        if (ent.Comp.Fanned && !Hands.EnumerateHands(args.Container.Owner).ToList().Contains(args.Container.ID))
-        {
+        if (ent.Comp.Fanned && !Hands.EnumerateHands(args.Container.Owner).Contains(args.Container.ID))
             TryFanCards(ent);
-        }
     }
 
     private void TakeFromDeck(CardsComponent comp1, CardsComponent comp2, int delta)
@@ -121,49 +120,38 @@ public abstract partial class SharedCardSystem : EntitySystem
         if (comp1.Flipped)
             comp1.Cards = comp1.Cards.Concat(selected).ToList();
         else
-        {
             comp1.Cards = selected.Concat(comp1.Cards).ToList();
-        }
     }
 
-    protected List<CardData> MovedCards(CardsComponent comp, int delta)
+    private List<CardData> MovedCards(CardsComponent comp, int delta)
     {
         if (comp.Flipped)
-            return comp.Cards.Skip(Math.Max(0, comp.Cards.Count() - delta)).ToList();
+            return comp.Cards.Skip(Math.Max(0, comp.Cards.Count - delta)).ToList();
         return comp.Cards.Take(delta).ToList();
     }
 
     public bool TryShuffleCards(Entity<CardsComponent> cards)
     {
-        // This should probably be predicted but it kinda plays a shuffle animation during catchup frames because it isn't predicted.
-        // Maybe fine to not predict this then.
         cards.Comp.Cards = cards.Comp.Cards.Shuffle().ToList();
-
         UpdateVisualState(cards);
-
         Audio.PlayPredicted(cards.Comp.ShuffleSound, cards, null);
-
         Dirty(cards.Owner, cards.Comp);
         return true;
     }
 
     public bool TryFlipCards(Entity<CardsComponent> cards)
     {
-        cards.Comp.Flipped = cards.Comp.Flipped ^ true;
-
+        cards.Comp.Flipped = !cards.Comp.Flipped;
         UpdateVisualState(cards);
-
         Dirty(cards.Owner, cards.Comp);
         return true;
     }
 
     public bool TryFanCards(Entity<CardsComponent> cards)
     {
-        cards.Comp.Fanned = cards.Comp.Fanned ^ true;
-
+        cards.Comp.Fanned = !cards.Comp.Fanned;
         UpdateVisualState(cards);
         UpdateStackCount(cards);
-
         Dirty(cards.Owner, cards.Comp);
         return true;
     }
@@ -183,25 +171,28 @@ public abstract partial class SharedCardSystem : EntitySystem
 
         cards.Comp.BeingCherryPicked = true;
 
-        bool Abort()
-        {
-            cards.Comp.BeingCherryPicked = false;
-            return false;
-        }
-
         if (
             Hands.TryGetActiveItem(user.Owner, out var recipient)
             && TryComp<StackComponent>(recipient, out var recipientStack)
             && Stacks.TryMergeStacks((cards.Owner, stackComp), (recipient.Value, recipientStack), out _, amount: 1)
         )
-            return Abort();
+        {
+            cards.Comp.BeingCherryPicked = false;
+            return false;
+        }
 
         split = Stacks.Split((cards.Owner, stackComp), 1, user.Comp.Coordinates);
         if (split == null)
-            return Abort();
+        {
+            cards.Comp.BeingCherryPicked = false;
+            return false;
+        }
 
         if (!TryComp<CardsComponent>(split, out var newCardsComp))
-            return Abort();
+        {
+            cards.Comp.BeingCherryPicked = false;
+            return false;
+        }
 
         cards.Comp.BeingCherryPicked = false;
 

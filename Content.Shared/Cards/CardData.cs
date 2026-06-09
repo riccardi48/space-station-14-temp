@@ -14,6 +14,7 @@ public partial struct CardData
 
     [DataField, AutoNetworkedField]
     public string CardBack = string.Empty;
+
     public CardData(ProtoId<CardPrototype> cardId, string baseState, string cardBack)
     {
         CardId = cardId;
