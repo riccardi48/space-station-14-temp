@@ -232,7 +232,7 @@ public abstract partial class SharedStackSystem : EntitySystem
     ///     This empty virtual method allows for UserSplit() to be called on the server from the client.
     ///     When prediction is improved, those two methods should be moved to shared, in order to predict the splitting itself (not just the verbs)
     /// </remarks>
-    private void UserSplit(Entity<StackComponent> stack, Entity<TransformComponent?> user, int amount)
+    public void UserSplit(Entity<StackComponent> stack, Entity<TransformComponent?> user, int amount)
     {
         if (!Resolve(user.Owner, ref user.Comp, false))
             return;

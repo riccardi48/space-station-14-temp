@@ -30,7 +30,6 @@ public sealed partial class CardSystem : SharedCardSystem
     {
         base.Initialize();
 
-        // UpdatesBefore.Add(typeof(SharedStackSystem));
         SubscribeLocalEvent<CardsComponent, AppearanceChangeEvent>(OnAppearanceChanged);
         SubscribeNetworkEvent<CardAnimationEvent>(HandleCardAnimation);
     }

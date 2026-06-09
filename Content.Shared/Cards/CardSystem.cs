@@ -130,7 +130,6 @@ public abstract partial class SharedCardSystem : EntitySystem
 
     private void OnCardsContainerInserted(Entity<CardsComponent> ent, ref EntGotInsertedIntoContainerMessage args)
     {
-        Log.Info($"{args.Container.ID}");
         if (ent.Comp.Fanned && !Hands.EnumerateHands(args.Container.Owner).ToList().Contains(args.Container.ID))
         {
             TryFanCards(ent);
@@ -152,10 +151,6 @@ public abstract partial class SharedCardSystem : EntitySystem
         {
             comp1.Cards = selected.Concat(comp1.Cards).ToList();
         }
-
-        var logString = "movedCards ";
-        selected.ForEach(item => logString += $"{item}");
-        Log.Info(logString);
     }
 
     protected List<ProtoId<CardPrototype>> MovedCards(CardsComponent comp, int delta)
@@ -165,9 +160,6 @@ public abstract partial class SharedCardSystem : EntitySystem
         return comp.Cards.Take(delta).ToList();
     }
 
-    /// <summary>
-    /// Called when user "Activated In World" (E) with the gun as the target
-    /// </summary>
     private void OnCardsActivate(Entity<CardsComponent> ent, ref ActivateInWorldEvent args)
     {
         if (args.Handled || !args.Complex)
@@ -177,9 +169,6 @@ public abstract partial class SharedCardSystem : EntitySystem
         TryFlipCards(ent);
     }
 
-    /// <summary>
-    /// Called when gun was "Activated In Hand" (Z)
-    /// </summary>
     private void OnCardsUse(Entity<CardsComponent> ent, ref UseInHandEvent args)
     {
         if (args.Handled)
@@ -245,11 +234,12 @@ public abstract partial class SharedCardSystem : EntitySystem
                 var card = ent.Comp.Cards[index];
                 var cardName = $"{card}";
 
-                Log.Info($"{i} {ent.Comp.Cards.Count}");
+                // Want this to have icon of the card
+                // Not sure is possible
                 AlternativeVerb take = new()
                 {
                     Text = Loc.GetString(cardName.Replace('_', '-')),
-                    Act = () => TryTakeCard(ent, user, index),
+                    Act = () => TryTakeCard(ent, user, index, out var _),
                     Category = VerbCategory.TakeCard,
                     Priority = priority,
                 };
@@ -261,23 +251,21 @@ public abstract partial class SharedCardSystem : EntitySystem
         }
     }
 
-    private bool TryShuffleCards(Entity<CardsComponent> cards)
+    public bool TryShuffleCards(Entity<CardsComponent> cards)
     {
         // This should probably be predicted but it kinda plays a shuffle animation during catchup frames because it isn't predicted.
         // Maybe fine to not predict this then.
         cards.Comp.Cards = cards.Comp.Cards.Shuffle().ToList();
-        Log.Info("Shuffled");
         Appearance.SetData(cards, CardVisuals.CardList, GetCardListVisualState(cards.Comp));
         _audio.PlayPredicted(cards.Comp.ShuffleSound, cards, null);
         Dirty(cards.Owner, cards.Comp);
         return true;
     }
 
-    private bool TryFlipCards(Entity<CardsComponent> cards)
+    public bool TryFlipCards(Entity<CardsComponent> cards)
     {
         cards.Comp.Flipped = cards.Comp.Flipped ^ true;
         cards.Comp.Fanned = false;
-        Log.Info("Flipped");
         Appearance.SetData(cards, CardVisuals.CardList, GetCardListVisualState(cards.Comp));
         Appearance.SetData(cards, CardVisuals.IsFlipped, cards.Comp.Flipped);
         Appearance.SetData(cards, CardVisuals.IsFanned, cards.Comp.Fanned);
@@ -285,22 +273,18 @@ public abstract partial class SharedCardSystem : EntitySystem
         return true;
     }
 
-    private bool TryFanCards(Entity<CardsComponent> cards)
+    public bool TryFanCards(Entity<CardsComponent> cards)
     {
-        if (cards.Comp.Cards.Count <= cards.Comp.MaxFanned)
-        {
-            cards.Comp.Fanned = cards.Comp.Fanned ^ true;
-            Log.Info("Fanned");
-            Appearance.SetData(cards, CardVisuals.CardList, GetCardListVisualState(cards.Comp));
-            Appearance.SetData(cards, CardVisuals.IsFanned, cards.Comp.Fanned);
-            Dirty(cards.Owner, cards.Comp);
-            return true;
-        }
-        return false;
+        cards.Comp.Fanned = cards.Comp.Fanned ^ true;
+        Appearance.SetData(cards, CardVisuals.CardList, GetCardListVisualState(cards.Comp));
+        Appearance.SetData(cards, CardVisuals.IsFanned, cards.Comp.Fanned);
+        Dirty(cards.Owner, cards.Comp);
+        return true;
     }
 
-    private bool TryTakeCard(Entity<CardsComponent> cards, Entity<TransformComponent?> user, int cardInx)
+    public bool TryTakeCard(Entity<CardsComponent> cards, Entity<TransformComponent?> user, int cardInx, out EntityUid? split)
     {
+        split = null;
         if (!cards.Comp.Fanned || !cards.Comp.Flipped)
             return false;
         if (!Resolve(user.Owner, ref user.Comp, false) || !TryComp<StackComponent>(cards.Owner, out var stackComp))
@@ -321,7 +305,8 @@ public abstract partial class SharedCardSystem : EntitySystem
         )
             return Abort();
 
-        if (Stacks.Split((cards.Owner, stackComp), 1, user.Comp.Coordinates) is not { } split)
+        split = Stacks.Split((cards.Owner, stackComp), 1, user.Comp.Coordinates);
+        if (split == null)
             return Abort();
 
         if (!TryComp<CardsComponent>(split, out var newCardsComp))
@@ -329,7 +314,7 @@ public abstract partial class SharedCardSystem : EntitySystem
 
         cards.Comp.BeingCherryPicked = false;
 
-        PlayCardTakeAnimation((split, newCardsComp), cards, cardInx);
+        PlayCardTakeAnimation((split.Value, newCardsComp), cards, cardInx);
         MoveCards(newCardsComp, cards.Comp, new List<ProtoId<CardPrototype>> { cards.Comp.Cards[cardInx] });
 
         if (newCardsComp.Cards.Count == 1)
@@ -338,19 +323,19 @@ public abstract partial class SharedCardSystem : EntitySystem
             newCardsComp.Fanned = cards.Comp.Fanned;
         }
 
-        Hands.PickupOrDrop(user.Owner, split);
+        Hands.PickupOrDrop(user.Owner, split.Value);
         Popup.PopupCursor(Loc.GetString("comp-stack-split"), user.Owner);
 
         Appearance.SetData(cards, CardVisuals.CardList, GetCardListVisualState(cards.Comp));
         if (TryComp<AppearanceComponent>(split, out var appearance))
         {
-            Appearance.SetData(split, CardVisuals.CardList, GetCardListVisualState(newCardsComp), appearance);
-            Appearance.SetData(split, CardVisuals.IsFlipped, newCardsComp.Flipped, appearance);
-            Appearance.SetData(split, CardVisuals.IsFanned, newCardsComp.Fanned, appearance);
+            Appearance.SetData(split.Value, CardVisuals.CardList, GetCardListVisualState(newCardsComp), appearance);
+            Appearance.SetData(split.Value, CardVisuals.IsFlipped, newCardsComp.Flipped, appearance);
+            Appearance.SetData(split.Value, CardVisuals.IsFanned, newCardsComp.Fanned, appearance);
         }
 
         Dirty(cards.Owner, cards.Comp);
-        Dirty(split, newCardsComp);
+        Dirty(split.Value, newCardsComp);
 
         return true;
     }
