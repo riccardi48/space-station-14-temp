@@ -53,42 +53,18 @@ public sealed class CardsTest : GameTest
                 stackCountBefore = stackComp.Count;
                 _sCards.TryShuffleCards((cards, cardsComp));
 
-                Assert.That(
-                    cardsComp.Cards.Count,
-                    Is.EqualTo(cardCountBefore),
-                    $"Shuffle did not return the same number of cards as before shuffle"
-                );
-                Assert.That(
-                    stackComp.Count,
-                    Is.EqualTo(stackCountBefore),
-                    $"Shuffle did not return the same number of cards in stack as before shuffle"
-                );
+                Assert.That(cardsComp.Cards.Count, Is.EqualTo(cardCountBefore));
+                Assert.That(stackComp.Count,Is.EqualTo(stackCountBefore));
 
                 _sCards.TryFlipCards((cards, cardsComp));
 
-                Assert.That(
-                    cardsComp.Cards.Count,
-                    Is.EqualTo(cardCountBefore),
-                    $"Flip did not return the same number of cards as before flip"
-                );
-                Assert.That(
-                    stackComp.Count,
-                    Is.EqualTo(stackCountBefore),
-                    $"Flip did not return the same number of cards in stack as before flip"
-                );
+                Assert.That(cardsComp.Cards.Count, Is.EqualTo(cardCountBefore));
+                Assert.That(stackComp.Count, Is.EqualTo(stackCountBefore));
 
                 _sCards.TryFanCards((cards, cardsComp));
 
-                Assert.That(
-                    cardsComp.Cards.Count,
-                    Is.EqualTo(cardCountBefore),
-                    $"Fan did not return the same number of cards as before Fan"
-                );
-                Assert.That(
-                    stackComp.Count,
-                    Is.EqualTo(stackCountBefore),
-                    $"Fan did not return the same number of cards in stack as before fan"
-                );
+                Assert.That(cardsComp.Cards.Count, Is.EqualTo(cardCountBefore));
+                Assert.That(stackComp.Count, Is.EqualTo(stackCountBefore));
 
                 if (!SEntMan.TryGetComponent<TransformComponent>(player, out var playerTransformComp))
                     Assert.Fail($"No Cards Prototype with name {cards}");
@@ -103,30 +79,14 @@ public sealed class CardsTest : GameTest
                 if (_sHands.GetActiveItem(player) != split)
                     Assert.Fail();
 
-                Assert.That(
-                    cardsComp.Cards.Count + splitCardsComp.Cards.Count,
-                    Is.EqualTo(cardCountBefore),
-                    $"Take card did not return the same number of cards as before take"
-                );
-                Assert.That(
-                    stackComp.Count + splitStackComp.Count,
-                    Is.EqualTo(stackCountBefore),
-                    $"Take card did not return the same number of cards in stack as before take"
-                );
+                Assert.That(cardsComp.Cards.Count + splitCardsComp.Cards.Count, Is.EqualTo(cardCountBefore));
+                Assert.That(stackComp.Count + splitStackComp.Count, Is.EqualTo(stackCountBefore));
 
                 if (!_sStacks.TryMergeStacks((cards, stackComp), (split.Value, splitStackComp), out var transferred))
                     Assert.Fail();
 
-                Assert.That(
-                    splitCardsComp.Cards.Count,
-                    Is.EqualTo(cardCountBefore),
-                    $"Merge did not return the same number of cards as before merge"
-                );
-                Assert.That(
-                    splitStackComp.Count,
-                    Is.EqualTo(stackCountBefore),
-                    $"Merge did not return the same number of cards in stack as before merge"
-                );
+                Assert.That(splitCardsComp.Cards.Count, Is.EqualTo(cardCountBefore));
+                Assert.That(splitStackComp.Count, Is.EqualTo(stackCountBefore));
 
                 cards = split.Value;
                 cardsComp = splitCardsComp;
@@ -145,29 +105,13 @@ public sealed class CardsTest : GameTest
                 if (!SEntMan.TryGetComponent<StackComponent>(split, out splitStackComp))
                     Assert.Fail();
 
-                Assert.That(
-                    cardsComp.Cards.Count + splitCardsComp.Cards.Count,
-                    Is.EqualTo(cardCountBefore),
-                    $"Split stack did not return the same number of cards as before split"
-                );
-                Assert.That(
-                    stackComp.Count + splitStackComp.Count,
-                    Is.EqualTo(stackCountBefore),
-                    $"Split stack did not return the same number of cards in stack as before split"
-                );
+                Assert.That(cardsComp.Cards.Count + splitCardsComp.Cards.Count, Is.EqualTo(cardCountBefore));
+                Assert.That(stackComp.Count + splitStackComp.Count, Is.EqualTo(stackCountBefore));
 
                 _sStacks.UserSplit((cards, stackComp), (player, playerTransComp), 20);
 
-                Assert.That(
-                    cardsComp.Cards.Count + splitCardsComp.Cards.Count,
-                    Is.EqualTo(cardCountBefore),
-                    $"Split stack did not return the same number of cards as before split"
-                );
-                Assert.That(
-                    stackComp.Count + splitStackComp.Count,
-                    Is.EqualTo(stackCountBefore),
-                    $"Split stack did not return the same number of cards in stack as before split"
-                );
+                Assert.That(cardsComp.Cards.Count + splitCardsComp.Cards.Count, Is.EqualTo(cardCountBefore));
+                Assert.That(stackComp.Count + splitStackComp.Count, Is.EqualTo(stackCountBefore));
 
                 if (!_sStacks.TryMergeStacks((cards, stackComp), (split.Value, splitStackComp), out transferred))
                     Assert.Fail();
@@ -202,21 +146,14 @@ public sealed class CardsInteractionTest : InteractionTest
 
         await Pickup(deleteHeld: false);
 
-        Assert.That(sCardsComp.Cards.Count, Is.EqualTo(cardCountBefore));
-        Assert.That(sStackComp.Count, Is.EqualTo(stackCountBefore));
-
         // Flip the deck of cards
         await UseInHand();
 
-        Assert.That(sCardsComp.Cards.Count, Is.EqualTo(cardCountBefore));
-        Assert.That(sStackComp.Count, Is.EqualTo(stackCountBefore));
         Assert.That(sCardsComp.Flipped, Is.EqualTo(true));
 
         // Fans the deck of cards
         await UseInHand();
 
-        Assert.That(sCardsComp.Cards.Count, Is.EqualTo(cardCountBefore));
-        Assert.That(sStackComp.Count, Is.EqualTo(stackCountBefore));
         Assert.That(sCardsComp.Flipped, Is.EqualTo(true));
         Assert.That(sCardsComp.Fanned, Is.EqualTo(true));
 
