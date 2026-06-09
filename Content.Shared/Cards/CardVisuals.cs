@@ -14,9 +14,9 @@ public enum CardVisuals : byte
 [Serializable, NetSerializable]
 public sealed class CardListVisualState : ICloneable
 {
-    public readonly List<ProtoId<CardPrototype>> CardList;
+    public readonly List<CardData> CardList;
 
-    public CardListVisualState(List<ProtoId<CardPrototype>> cardList)
+    public CardListVisualState(List<CardData> cardList)
     {
         CardList = cardList;
     }
@@ -32,9 +32,9 @@ public sealed class CardAnimationEvent : EntityEventArgs
 {
     public readonly NetEntity Mergee;
     public readonly NetEntity Merger;
-    public readonly List<ProtoId<CardPrototype>> Selected;
+    public readonly List<CardData> Selected;
 
-    public CardAnimationEvent(NetEntity merger, NetEntity mergee, List<ProtoId<CardPrototype>> selected)
+    public CardAnimationEvent(NetEntity merger, NetEntity mergee, List<CardData> selected)
     {
         Mergee = mergee;
         Merger = merger;

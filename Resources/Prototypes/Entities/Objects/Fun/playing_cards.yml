@@ -12,7 +12,7 @@
     baseLayer: base
     halfOnAltInteract: false
     layerStates:
-    - deck_nanotrasen_empty
+    - deck_nanotrasen_single
     - deck_nanotrasen_low
     - deck_nanotrasen_half
     - deck_nanotrasen_full
@@ -23,13 +23,14 @@
     thresholds: [2, 20, 35]
   - type: Sprite
     sprite: Objects/Fun/PlayingCards/nanotrasenbasiccards.rsi
-    state: deck_nanotrasen_empty
+    state: deck_nanotrasen_single
     layers:
-    - state: deck_nanotrasen_empty
+    - state: deck_nanotrasen_single
       map: ["base"]
   - type: Item
     sprite: Objects/Fun/PlayingCards/nanotrasenbasiccards.rsi
     size: Normal
+    state: sc_backside
   - type: Appearance
 
 - type: entity
@@ -100,4 +101,4 @@
   id: CardsStack
   maxCount: 52
   spawn: BaseCards
-  icon: { sprite: /Textures/Objects/Fun/PlayingCards/nanotrasenbasiccards.rsi, state: deck_nanotrasen_empty }
+  icon: { sprite: /Textures/Objects/Fun/PlayingCards/nanotrasenbasiccards.rsi, state: deck_nanotrasen_single }

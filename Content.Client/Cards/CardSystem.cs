@@ -48,7 +48,7 @@ public sealed partial class CardSystem : SharedCardSystem
     protected override void PlayCardAnimation(
         Entity<CardsComponent> merger,
         Entity<CardsComponent> mergee,
-        List<ProtoId<CardPrototype>> selected
+        List<CardData> selected
     )
     {
         if (_timing.ApplyingState)
@@ -66,7 +66,7 @@ public sealed partial class CardSystem : SharedCardSystem
     private EntityUid SpawnTempClone(
         Entity<CardsComponent> mergee,
         EntityCoordinates mergeeCoords,
-        List<ProtoId<CardPrototype>> selected
+        List<CardData> selected
     )
     {
         var ent = Spawn("BaseCards", mergeeCoords);
@@ -115,15 +115,7 @@ public sealed partial class CardSystem : SharedCardSystem
         Entity<SpriteComponent?> sprite,
         Vector2 offset,
         Angle rotation
-    )
-    {
-        var (baseLayer, layerOne, layerTwo) = CardLayers(i);
-        _sprite.LayerMapReserve(sprite, baseLayer);
-        _sprite.LayerMapReserve(sprite, layerOne);
-        _sprite.LayerMapReserve(sprite, layerTwo);
-        TransformCard(baseLayer, layerOne, layerTwo, offset, rotation, sprite);
-        BuildCard(prototype, baseLayer, baseSprite, layerOne, layerTwo, sprite);
-    }
+    ) { }
 
     private void OnAppearanceChanged(EntityUid uid, CardsComponent component, ref AppearanceChangeEvent args)
     {
@@ -131,7 +123,7 @@ public sealed partial class CardSystem : SharedCardSystem
         Appearance.TryGetData<bool>(uid, CardVisuals.IsFanned, out var fanned, args.Component);
 
         if (!Appearance.TryGetData<CardListVisualState>(uid, CardVisuals.CardList, out var visualState, args.Component))
-            visualState = new CardListVisualState(new List<ProtoId<CardPrototype>>());
+            visualState = new CardListVisualState(new List<CardData>());
 
         if (!TryComp<SpriteComponent>(uid, out var sprite) || !TryComp<CardsComponent>(uid, out var cards))
             return;
@@ -146,36 +138,41 @@ public sealed partial class CardSystem : SharedCardSystem
             _sprite.RemoveLayer((uid, sprite), layerTwo, false);
         }
 
-        if (!flipped)
-            return;
 
-        Appearance.SetData(uid, StackVisuals.Hide, false, args.Component);
-        _sprite.LayerSetVisible((uid, sprite), "base", false);
-
-        if (fanned)
+        var count = visualState.CardList.Count;
+        var radius = FanRadius(count);
+        for (var i = 0; i < count; i++)
         {
-            var count = visualState.CardList.Count;
-            var radius = FanRadius(count);
-            for (var i = 0; i < count; i++)
+            var card = visualState.CardList[i];
+            var (baseLayer, layerOne, layerTwo) = CardLayers(i);
+            if (!_prototypeManager.TryIndex<CardPrototype>(card.CardId, out var prototype))
+                continue;
+            var angle = (i - count / 2.0 + 0.5) / count * Math.PI;
+            var position = FanPosition(angle, radius);
+            var rotation = new Angle(-angle);
+
+            _sprite.LayerMapReserve((uid, sprite), baseLayer);
+            _sprite.LayerMapReserve((uid, sprite), layerOne);
+            _sprite.LayerMapReserve((uid, sprite), layerTwo);
+            if (!flipped)
             {
-                if (!_prototypeManager.TryIndex<CardPrototype>(visualState.CardList[i].Id, out var prototype))
-                    continue;
-                var angle = (i - count / 2.0 + 0.5) / count * Math.PI;
-                PlaceCard(
-                    i,
-                    prototype,
-                    component.BaseState,
-                    (uid, sprite),
-                    FanPosition(angle, radius),
-                    new Angle(-angle)
-                );
+                BuildLayer(baseLayer, card.CardBack, null, (uid, sprite));
+                TransformLayer(baseLayer, position, rotation, (uid, sprite));
+                _sprite.LayerSetVisible((uid, sprite), layerOne, false);
+                _sprite.LayerSetVisible((uid, sprite), layerTwo, false);
             }
-            return;
+            else
+            {
+                BuildCard(prototype, baseLayer, card.BaseState, layerOne, layerTwo, (uid, sprite));
+                TransformLayer(baseLayer, position, rotation, (uid, sprite));
+                TransformLayer(layerOne, position, rotation, (uid, sprite));
+                TransformLayer(layerTwo, position, rotation, (uid, sprite));
+            }
+            if (i == 0)
+            {
+                TransformLayer("base", position, rotation, (uid, sprite));
+            }
         }
-        var id = visualState.CardList.FirstOrDefault().Id;
-        if (id == null || !_prototypeManager.TryIndex<CardPrototype>(id, out var topCard))
-            return;
-        PlaceCard(0, topCard, component.BaseState, (uid, sprite), Vector2.Zero, Angle.Zero);
     }
 
     public void BuildCard(
@@ -187,42 +184,27 @@ public sealed partial class CardSystem : SharedCardSystem
         Entity<SpriteComponent?> sprite
     )
     {
-        _sprite.LayerSetVisible(sprite, baseLayer, true);
-        _sprite.LayerSetRsiState(sprite, baseLayer, baseSprite);
+        BuildLayer(baseLayer, baseSprite, null, sprite);
 
-        if (prototype.LayerOneState != null)
-        {
-            _sprite.LayerSetVisible(sprite, layerOne, true);
-            _sprite.LayerSetRsiState(sprite, layerOne, prototype.LayerOneState);
-            if (prototype.LayerOneColor != null)
-                _sprite.LayerSetColor(sprite, layerOne, prototype.LayerOneColor.Value);
-        }
+        BuildLayer(layerOne, prototype.LayerOneState, prototype.LayerOneColor, sprite);
 
-        if (prototype.LayerTwoState != null)
+        BuildLayer(layerTwo, prototype.LayerTwoState, prototype.LayerTwoColor, sprite);
+    }
+
+    public void BuildLayer(string layer, string? layerState, Color? layerColor, Entity<SpriteComponent?> sprite)
+    {
+        if (layer != null)
         {
-            _sprite.LayerSetVisible(sprite, layerTwo, true);
-            _sprite.LayerSetRsiState(sprite, layerTwo, prototype.LayerTwoState);
-            if (prototype.LayerTwoColor != null)
-                _sprite.LayerSetColor(sprite, layerTwo, prototype.LayerTwoColor.Value);
+            _sprite.LayerSetVisible(sprite, layer, true);
+            _sprite.LayerSetRsiState(sprite, layer, layerState);
+            if (layerColor != null)
+                _sprite.LayerSetColor(sprite, layer, layerColor.Value);
         }
     }
 
-    public void TransformCard(
-        string baseLayer,
-        string layerOne,
-        string layerTwo,
-        Vector2 movement,
-        Angle rotation,
-        Entity<SpriteComponent?> sprite
-    )
+    public void TransformLayer(string layer, Vector2 movement, Angle rotation, Entity<SpriteComponent?> sprite)
     {
-        _sprite.LayerSetOffset(sprite, baseLayer, movement);
-        _sprite.LayerSetRotation(sprite, baseLayer, rotation);
-
-        _sprite.LayerSetOffset(sprite, layerOne, movement);
-        _sprite.LayerSetRotation(sprite, layerOne, rotation);
-
-        _sprite.LayerSetOffset(sprite, layerTwo, movement);
-        _sprite.LayerSetRotation(sprite, layerTwo, rotation);
+        _sprite.LayerSetOffset(sprite, layer, movement);
+        _sprite.LayerSetRotation(sprite, layer, rotation);
     }
 }

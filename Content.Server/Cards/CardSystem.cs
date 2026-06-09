@@ -12,7 +12,7 @@ public sealed partial class CardSystem : SharedCardSystem
     protected override void PlayCardAnimation(
         Entity<CardsComponent> merger,
         Entity<CardsComponent> mergee,
-        List<ProtoId<CardPrototype>> selected
+        List<CardData> selected
     )
     {
         var ev = new CardAnimationEvent(GetNetEntity(merger.Owner), GetNetEntity(mergee.Owner), selected);

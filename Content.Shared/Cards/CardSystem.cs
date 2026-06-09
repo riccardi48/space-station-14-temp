@@ -53,9 +53,13 @@ public abstract partial class SharedCardSystem : EntitySystem
         if (!TryComp(ent.Owner, out AppearanceComponent? appearance))
             return;
 
-        Appearance.SetData(ent.Owner, CardVisuals.CardList, ent.Comp.Cards, appearance);
+        Appearance.SetData(ent.Owner, CardVisuals.CardList, GetCardListVisualState(ent.Comp), appearance);
         Appearance.SetData(ent.Owner, CardVisuals.IsFlipped, ent.Comp.Flipped, appearance);
         Appearance.SetData(ent.Owner, CardVisuals.IsFanned, ent.Comp.Fanned, appearance);
+
+        ent.Comp.Cards = ent
+            .Comp._cards.Select(protoId => new CardData(protoId, ent.Comp.BaseState, ent.Comp.CardBack))
+            .ToList();
     }
 
     private void OnMergeEvent(Entity<CardsComponent> ent, ref MergeEvent args)
@@ -92,14 +96,14 @@ public abstract partial class SharedCardSystem : EntitySystem
 
     protected void PlayCardTakeAnimation(Entity<CardsComponent> merger, Entity<CardsComponent> mergee, int cardInx)
     {
-        List<ProtoId<CardPrototype>> selected = new List<ProtoId<CardPrototype>> { mergee.Comp.Cards[cardInx] };
+        List<CardData> selected = new List<CardData> { mergee.Comp.Cards[cardInx] };
         PlayCardAnimation(merger, mergee, selected);
     }
 
     protected abstract void PlayCardAnimation(
         Entity<CardsComponent> merger,
         Entity<CardsComponent> mergee,
-        List<ProtoId<CardPrototype>> selected
+        List<CardData> selected
     );
 
     private void OnSplitEvent(Entity<CardsComponent> ent, ref StackSplitEvent args)
@@ -142,7 +146,7 @@ public abstract partial class SharedCardSystem : EntitySystem
         MoveCards(comp1, comp2, selected);
     }
 
-    private void MoveCards(CardsComponent comp1, CardsComponent comp2, List<ProtoId<CardPrototype>> selected)
+    private void MoveCards(CardsComponent comp1, CardsComponent comp2, List<CardData> selected)
     {
         selected.ForEach(item => comp2.Cards.Remove(item));
         if (comp1.Flipped)
@@ -153,7 +157,7 @@ public abstract partial class SharedCardSystem : EntitySystem
         }
     }
 
-    protected List<ProtoId<CardPrototype>> MovedCards(CardsComponent comp, int delta)
+    protected List<CardData> MovedCards(CardsComponent comp, int delta)
     {
         if (comp.Flipped)
             return comp.Cards.Skip(Math.Max(0, comp.Cards.Count() - delta)).ToList();
@@ -208,8 +212,7 @@ public abstract partial class SharedCardSystem : EntitySystem
         args.Verbs.Add(shuffle);
 
         if (
-            ent.Comp.Flipped
-            && (
+            (
                 !_container.TryGetContainingContainer(ent.Owner, out var container)
                 || Hands.EnumerateHands(container.Owner).ToList().Contains(container.ID)
             )
@@ -232,7 +235,7 @@ public abstract partial class SharedCardSystem : EntitySystem
             {
                 var index = ent.Comp.Cards.Count - i - 1;
                 var card = ent.Comp.Cards[index];
-                var cardName = $"{card}";
+                var cardName = $"{card.CardId}";
 
                 // Want this to have icon of the card
                 // Not sure is possible
@@ -265,7 +268,7 @@ public abstract partial class SharedCardSystem : EntitySystem
     public bool TryFlipCards(Entity<CardsComponent> cards)
     {
         cards.Comp.Flipped = cards.Comp.Flipped ^ true;
-        cards.Comp.Fanned = false;
+        // cards.Comp.Fanned = false;
         Appearance.SetData(cards, CardVisuals.CardList, GetCardListVisualState(cards.Comp));
         Appearance.SetData(cards, CardVisuals.IsFlipped, cards.Comp.Flipped);
         Appearance.SetData(cards, CardVisuals.IsFanned, cards.Comp.Fanned);
@@ -320,7 +323,7 @@ public abstract partial class SharedCardSystem : EntitySystem
         cards.Comp.BeingCherryPicked = false;
 
         PlayCardTakeAnimation((split.Value, newCardsComp), cards, cardInx);
-        MoveCards(newCardsComp, cards.Comp, new List<ProtoId<CardPrototype>> { cards.Comp.Cards[cardInx] });
+        MoveCards(newCardsComp, cards.Comp, new List<CardData> { cards.Comp.Cards[cardInx] });
 
         if (newCardsComp.Cards.Count == 1)
         {
@@ -348,9 +351,14 @@ public abstract partial class SharedCardSystem : EntitySystem
     protected CardListVisualState GetCardListVisualState(CardsComponent cards)
     {
         if (!cards.Flipped)
-            return new CardListVisualState(new List<ProtoId<CardPrototype>>());
+        {
+            if (cards.Fanned)
+                return new CardListVisualState(cards.Cards.Take(cards.MaxFanned).ToList());
+            return new CardListVisualState(cards.Cards.Take(1).ToList());
+        }
         if (cards.Fanned)
             return new CardListVisualState(cards.Cards.TakeLast(cards.MaxFanned).ToList());
         return new CardListVisualState(cards.Cards.TakeLast(1).ToList());
     }
+
 }

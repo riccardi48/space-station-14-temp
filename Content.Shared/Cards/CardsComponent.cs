@@ -7,8 +7,11 @@ namespace Content.Shared.Cards;
 [RegisterComponent, NetworkedComponent, AutoGenerateComponentState(true)]
 public sealed partial class CardsComponent : Component
 {
-    [DataField("cards", required: true), AutoNetworkedField]
-    public List<ProtoId<CardPrototype>> Cards = new();
+    [DataField("cards", required: true)]
+    internal List<ProtoId<CardPrototype>> _cards { get; private set; }
+
+    [ViewVariables, AutoNetworkedField]
+    public List<CardData> Cards { get; set; } = new();
 
     [DataField, AutoNetworkedField]
     public bool Flipped = false;
@@ -26,6 +29,11 @@ public sealed partial class CardsComponent : Component
     public SoundSpecifier ShuffleSound = new SoundPathSpecifier("/Audio/Effects/cardshuffle.ogg");
 
     [DataField, AutoNetworkedField]
+    public string SingleCard = "deck_nanotrasen_single";
+
+    [DataField, AutoNetworkedField]
     public string BaseState = "sc_base";
 
+    [DataField, AutoNetworkedField]
+    public string CardBack = "sc_backside";
 }
