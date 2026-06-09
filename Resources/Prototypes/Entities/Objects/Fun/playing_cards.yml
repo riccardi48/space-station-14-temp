@@ -103,6 +103,11 @@
     - type: Sprite
       state: deck_nanotrasen_full
 
+- type: stack
+  id: CardsStack
+  maxCount: 52
+  spawn: BaseCards
+  icon: { sprite: /Textures/Objects/Fun/PlayingCards/nanotrasenbasiccards.rsi, state: deck_single }
 
 - type: entity
   parent: [standardDeck, syndiBaseCards, BaseSyndicateContraband]
@@ -131,17 +136,12 @@
     - type: DamageOtherOnHit
       damage:
         types:
-          Piercing: 15
+          Piercing: 10
+          Slash: 8
     - type: EmbeddableProjectile
       offset: 0.0,0.0
     - type: LandAtCursor
 
-
-- type: stack
-  id: CardsStack
-  maxCount: 52
-  spawn: BaseCards
-  icon: { sprite: /Textures/Objects/Fun/PlayingCards/nanotrasenbasiccards.rsi, state: deck_single }
 
 - type: stack
   id: SyndicateCardsStack

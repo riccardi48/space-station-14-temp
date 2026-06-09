@@ -77,10 +77,6 @@ public abstract partial class SharedCardSystem : EntitySystem
             PlayCardDrawAnimation(ent, (args.Mergee, mergeeComp), args.Delta);
         TakeFromDeck(ent.Comp, mergeeComp, args.Delta);
 
-        if (ent.Comp.Fanned == true && ent.Comp.Cards.Count > ent.Comp.MaxFanned)
-        {
-            ent.Comp.Fanned = false;
-        }
         Appearance.SetData(ent, CardVisuals.CardList, GetCardListVisualState(ent.Comp));
         Appearance.SetData(args.Mergee, CardVisuals.CardList, GetCardListVisualState(mergeeComp));
 
@@ -179,6 +175,10 @@ public abstract partial class SharedCardSystem : EntitySystem
 
         args.Handled = true;
         if (ent.Comp.Flipped && !ent.Comp.Fanned)
+        {
+            TryFanCards(ent);
+        }
+        else if (ent.Comp.Fanned)
         {
             TryFanCards(ent);
             TryFlipCards(ent);
