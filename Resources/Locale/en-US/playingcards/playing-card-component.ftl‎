@@ -55,3 +55,5 @@ ten-of-spades = 10 of Spades
 jack-of-spades = Jack of Spades
 queen-of-spades = Queen of Spades
 king-of-spades = King of Spades
+
+comp-cards-examine-detail = The top card is the {$card}

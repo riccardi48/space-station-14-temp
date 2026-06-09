@@ -1,4 +1,5 @@
 using System.Linq;
+using Content.Shared.Examine;
 using Content.Shared.Hands.EntitySystems;
 using Content.Shared.Interaction;
 using Content.Shared.Interaction.Events;
@@ -43,6 +44,7 @@ public abstract partial class SharedCardSystem : EntitySystem
         SubscribeLocalEvent<CardsComponent, GetVerbsEvent<AlternativeVerb>>(OnCardsAlternativeInteract);
         SubscribeLocalEvent<CardsComponent, ComponentInit>(OnCardsInit);
         SubscribeLocalEvent<CardsComponent, ComponentStartup>(OnCardsStarted);
+        SubscribeLocalEvent<CardsComponent, ExaminedEvent>(OnCardsExamined);
 
         SubscribeLocalEvent<CardsComponent, ActivateInWorldEvent>(OnCardsActivate);
         SubscribeLocalEvent<CardsComponent, UseInHandEvent>(OnCardsUse);
@@ -51,7 +53,9 @@ public abstract partial class SharedCardSystem : EntitySystem
 
     private void OnCardsInit(Entity<CardsComponent> ent, ref ComponentInit args)
     {
-        ent.Comp.Cards = ent.Comp._cards.Select(protoId => new CardData(protoId, ent.Comp.BaseState, ent.Comp.CardBack)).ToList();
+        ent.Comp.Cards = ent
+            .Comp._cards.Select(protoId => new CardData(protoId, ent.Comp.BaseState, ent.Comp.CardBack))
+            .ToList();
     }
 
     private void OnCardsStarted(Entity<CardsComponent> ent, ref ComponentStartup args)
@@ -253,6 +257,21 @@ public abstract partial class SharedCardSystem : EntitySystem
 
                 args.Verbs.Add(take);
             }
+        }
+    }
+
+    private void OnCardsExamined(Entity<CardsComponent> ent, ref ExaminedEvent args)
+    {
+        if (!args.IsInDetailsRange)
+            return;
+
+        if (ent.Comp.Flipped)
+        {
+            var cards = GetCardListVisualState(ent.Comp);
+            var cardName = (string)cards.CardList.Last().CardId;
+            args.PushMarkup(
+                Loc.GetString("comp-cards-examine-detail", ("card", Loc.GetString(cardName.Replace('_', '-'))))
+            );
         }
     }
 

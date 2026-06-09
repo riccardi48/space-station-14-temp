@@ -110,12 +110,12 @@
   icon: { sprite: /Textures/Objects/Fun/PlayingCards/nanotrasenbasiccards.rsi, state: deck_single }
 
 - type: entity
-  parent: [standardDeck, syndiBaseCards, BaseSyndicateContraband]
+  parent: [standardDeck, syndiBaseCards]
   id: syndiCards
   name: Deck of Syndicate Cards
 
 - type: entity
-  parent: BaseCards
+  parent: [ BaseCards, BaseSyndicateContraband ]
   id: syndiBaseCards
   name: Deck of Syndicate Cards
   categories: [ HideSpawnMenu ]
