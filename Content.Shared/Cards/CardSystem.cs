@@ -282,7 +282,12 @@ public abstract partial class SharedCardSystem : EntitySystem
         return true;
     }
 
-    public bool TryTakeCard(Entity<CardsComponent> cards, Entity<TransformComponent?> user, int cardInx, out EntityUid? split)
+    public bool TryTakeCard(
+        Entity<CardsComponent> cards,
+        Entity<TransformComponent?> user,
+        int cardInx,
+        out EntityUid? split
+    )
     {
         split = null;
         if (!cards.Comp.Fanned || !cards.Comp.Flipped)

@@ -6,6 +6,7 @@
   components:
   - type: Cards
     cards: []
+    maxFanned: 10
   - type: Stack
     stackType: CardsStack
     baseLayer: base

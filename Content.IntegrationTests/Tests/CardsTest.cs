@@ -23,6 +23,7 @@ public sealed class CardsTest : GameTest
 
     [SidedDependency(Side.Server)]
     private readonly HandsSystem _sHands = null!;
+
     [SidedDependency(Side.Server)]
     private readonly TransformSystem _sTransform = null!;
     private const string CardsProtoId = "cardDeck";
@@ -54,7 +55,7 @@ public sealed class CardsTest : GameTest
                 _sCards.TryShuffleCards((cards, cardsComp));
 
                 Assert.That(cardsComp.Cards.Count, Is.EqualTo(cardCountBefore));
-                Assert.That(stackComp.Count,Is.EqualTo(stackCountBefore));
+                Assert.That(stackComp.Count, Is.EqualTo(stackCountBefore));
 
                 _sCards.TryFlipCards((cards, cardsComp));
 
@@ -144,7 +145,7 @@ public sealed class CardsInteractionTest : InteractionTest
         int cardCountBefore = sCardsComp.Cards.Count;
         int stackCountBefore = sStackComp.Count;
 
-        await Pickup(deleteHeld: false);
+        await Pickup();
 
         // Flip the deck of cards
         await UseInHand();
