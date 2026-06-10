@@ -194,17 +194,14 @@ public abstract partial class SharedStackSystem : EntitySystem
 
         var user = args.User; // Can't pass ref events into verbs
 
-        if (ent.Comp.HalfOnAltInteract)
+        AlternativeVerb halve = new()
         {
-            AlternativeVerb halve = new()
-            {
-                Text = Loc.GetString("comp-stack-split-halve"),
-                Category = VerbCategory.Split,
-                Act = () => UserSplit(ent, user, ent.Comp.Count / 2),
-                Priority = 1,
-            };
-            args.Verbs.Add(halve);
-        }
+            Text = Loc.GetString("comp-stack-split-halve"),
+            Category = VerbCategory.Split,
+            Act = () => UserSplit(ent, user, ent.Comp.Count / 2),
+            Priority = ent.Comp.HalfOnAltInteract ? 1 : -20,
+        };
+        args.Verbs.Add(halve);
 
         var priority = 0;
         foreach (var amount in DefaultSplitAmounts)
@@ -263,34 +260,7 @@ public abstract partial class SharedStackSystem : EntitySystem
     /// <param name="spawnPosition">Where to spawn the new stack</param>
     /// <returns>Null if StackComponent doesn't resolve, or amount to move is greater than ent has available.</returns>
     [PublicAPI]
-    public EntityUid? Split(Entity<StackComponent?> ent, int amount, EntityCoordinates spawnPosition)
-    {
-        if (!Resolve(ent.Owner, ref ent.Comp))
-            return null;
-
-        // Try to remove the amount of things we want to split from the original stack...
-        if (!TryUse(ent, amount))
-            return null;
-
-        if (!_prototype.Resolve(ent.Comp.StackTypeId, out var stackType))
-            return null;
-
-        // Set the output parameter in the event instance to the newly split stack.
-        var newEntity = PredictedSpawnAtPosition(stackType.Spawn, spawnPosition);
-        Xform.SetParent(newEntity, spawnPosition.EntityId);
-
-        // There should always be a StackComponent
-        var stackComp = Comp<StackComponent>(newEntity);
-
-        SetCount((newEntity, stackComp), amount);
-        stackComp.Unlimited = false; // Don't let people dupe unlimited stacks
-        Dirty(newEntity, stackComp);
-
-        var ev = new StackSplitEvent(newEntity);
-        RaiseLocalEvent(ent, ref ev);
-
-        return newEntity;
-    }
+    public abstract EntityUid? Split(Entity<StackComponent?> ent, int amount, EntityCoordinates spawnPosition);
 }
 
 /// <summary>
