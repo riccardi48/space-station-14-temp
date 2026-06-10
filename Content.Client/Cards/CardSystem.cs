@@ -11,6 +11,7 @@ using Robust.Client.Graphics;
 using Robust.Client.State;
 using Robust.Shared.Map;
 using Robust.Shared.Prototypes;
+using DrawDepth = Content.Shared.DrawDepth.DrawDepth;
 
 namespace Content.Client.Cards;
 
@@ -131,7 +132,8 @@ public sealed partial class CardSystem : SharedCardSystem
         cardsComp.Cards = selected;
         cardsComp.Flipped = mergee.Comp.Flipped;
         Stacks.SetCount((ent, stackComp), cardsComp.Cards.Count);
-
+        if (TryComp<SpriteComponent>(ent, out var sprite))
+            _sprite.SetDrawDepth((ent, sprite), (int)DrawDepth.BelowMobs);
         if (TryComp<AppearanceComponent>(ent, out var appearance))
         {
             Appearance.SetData(ent, CardVisuals.CardList, GetCardListVisualState(cardsComp), appearance);
