@@ -2,6 +2,7 @@ using System.Numerics;
 using Content.Shared.Database;
 using Content.Shared.Hands.Components;
 using Content.Shared.Interaction;
+using Content.Shared.Interaction.Events;
 using Content.Shared.Inventory.VirtualItem;
 using Content.Shared.Storage.Components;
 using Content.Shared.Tag;
@@ -165,6 +166,8 @@ public abstract partial class SharedHandsSystem
         var origin = new MapCoordinates(itemPos, itemXform.MapID);
         var target = TransformSystem.ToMapCoordinates(targetDropLocation.Value);
         TransformSystem.SetWorldPositionRotation(entity.Value, GetFinalDropCoordinates(ent, origin, target, entity.Value), itemRot);
+        var dropMsg = new DroppedEvent(EntityUid.Invalid);
+        RaiseLocalEvent(entity.Value, dropMsg, true);
         return true;
     }
 

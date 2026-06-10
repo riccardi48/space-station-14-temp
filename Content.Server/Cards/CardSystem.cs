@@ -1,4 +1,5 @@
 using Content.Shared.Cards;
+using Content.Shared.Stacks;
 using JetBrains.Annotations;
 using Robust.Shared.Player;
 using Robust.Shared.Prototypes;
@@ -9,6 +10,28 @@ namespace Content.Server.Cards;
 [UsedImplicitly]
 public sealed partial class CardSystem : SharedCardSystem
 {
+    public override void Initialize()
+    {
+        base.Initialize();
+
+        SubscribeNetworkEvent<CardDropMergeEvent>(HandleDropMerge);
+    }
+
+    private void HandleDropMerge(CardDropMergeEvent args)
+    {
+        var mergee = GetEntity(args.Mergee);
+        var merger = GetEntity(args.Merger);
+        if (
+            TryComp<StackComponent>(mergee, out var donerStack)
+            && TryComp<StackComponent>(merger, out var recipientStack)
+            && Stacks.TryMergeStacks((mergee, donerStack), (merger, recipientStack), out _)
+        )
+        {
+            return;
+        }
+        Log.Error("AAAAAAAAAAAAAAA");
+    }
+
     protected override void PlayCardAnimation(
         Entity<CardsComponent> merger,
         Entity<CardsComponent> mergee,

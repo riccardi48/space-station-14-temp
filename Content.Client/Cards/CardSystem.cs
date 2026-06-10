@@ -1,10 +1,14 @@
 using System.Linq;
 using System.Numerics;
+using Content.Client.Gameplay;
 using Content.Shared.Cards;
+using Content.Shared.Interaction.Events;
 using Content.Shared.Stacks;
 using Content.Shared.Storage.EntitySystems;
 using JetBrains.Annotations;
 using Robust.Client.GameObjects;
+using Robust.Client.Graphics;
+using Robust.Client.State;
 using Robust.Shared.Map;
 using Robust.Shared.Prototypes;
 
@@ -26,12 +30,42 @@ public sealed partial class CardSystem : SharedCardSystem
     [Dependency]
     private IPrototypeManager _prototypeManager = default!;
 
+    [Dependency]
+    private IStateManager _stateManager = default!;
+
+    [Dependency]
+    private IEyeManager _eyeManager = default!;
+
     public override void Initialize()
     {
         base.Initialize();
 
         SubscribeLocalEvent<CardsComponent, AppearanceChangeEvent>(OnAppearanceChanged);
         SubscribeNetworkEvent<CardAnimationEvent>(HandleCardAnimation);
+        SubscribeLocalEvent<CardsComponent, DroppedEvent>(OnCardsDropped);
+    }
+
+    private void OnCardsDropped(Entity<CardsComponent> ent, ref DroppedEvent args)
+    {
+        if (args.User != EntityUid.Invalid)
+            return;
+        var currentState = _stateManager.CurrentState;
+        if (currentState is not GameplayStateBase screen)
+            return;
+        var uid = screen
+            .GetClickableEntities(Transform(ent).Coordinates)
+            .FirstOrDefault(e => e != ent.Owner && TryComp<CardsComponent>(e, out _));
+        if (
+            uid != ent.Owner
+            && TryComp<CardsComponent>(uid, out var cardComp)
+            && TryComp<StackComponent>(ent.Owner, out var donerStack)
+            && TryComp<StackComponent>(uid, out var recipientStack)
+            && Stacks.TryMergeStacks((ent.Owner, donerStack), (uid, recipientStack), out _)
+        )
+        {
+            if (Timing.IsFirstTimePredicted)
+                RaisePredictiveEvent(new CardDropMergeEvent(GetNetEntity(uid), GetNetEntity(ent.Owner)));
+        }
     }
 
     private void HandleCardAnimation(CardAnimationEvent args)

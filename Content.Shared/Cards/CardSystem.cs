@@ -8,6 +8,7 @@ using Content.Shared.Stacks;
 using Content.Shared.Verbs;
 using Robust.Shared.Audio.Systems;
 using Robust.Shared.Containers;
+using Robust.Shared.Map;
 using Robust.Shared.Timing;
 
 namespace Content.Shared.Cards;
@@ -34,6 +35,9 @@ public abstract partial class SharedCardSystem : EntitySystem
 
     [Dependency]
     protected IGameTiming Timing = default!;
+
+    [Dependency]
+    protected SharedTransformSystem TransformSystem = default!;
 
     public override void Initialize()
     {

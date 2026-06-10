@@ -114,3 +114,16 @@ public sealed class CardAnimationEvent : EntityEventArgs
         Selected = selected;
     }
 }
+
+[Serializable, NetSerializable]
+public sealed class CardDropMergeEvent : EntityEventArgs
+{
+    public readonly NetEntity Mergee;
+    public readonly NetEntity Merger;
+
+    public CardDropMergeEvent(NetEntity merger, NetEntity mergee)
+    {
+        Mergee = mergee;
+        Merger = merger;
+    }
+}
