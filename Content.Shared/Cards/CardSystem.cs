@@ -93,7 +93,12 @@ public abstract partial class SharedCardSystem : EntitySystem
             return;
 
         var delta = splitStackComp.Count;
-        PlayCardDrawAnimation((args.NewId, splitComp), ent, delta, playOnUser: true);
+        PlayCardDrawAnimation(
+            (args.NewId, splitComp),
+            ent,
+            delta,
+            playOnUser: Hands.GetActiveItem(Transform(ent.Owner).ParentUid) != ent.Owner
+        );
         TakeFromDeck(splitComp, ent.Comp, delta);
         splitComp.Flipped = ent.Comp.Flipped;
         splitComp.Fanned = ent.Comp.Fanned;

@@ -1,6 +1,8 @@
 using System.Linq;
 using Content.Shared.Examine;
 using Content.Shared.Stacks;
+using Robust.Shared.Map;
+using Robust.Shared.Prototypes;
 using Robust.Shared.Serialization;
 
 namespace Content.Shared.Cards;
@@ -80,9 +82,33 @@ public abstract partial class SharedCardSystem
         PlayCardAnimation(merger, mergee, selected, playOnUser: playOnUser);
     }
 
-    protected abstract void PlayCardAnimation(
+    private void PlayCardAnimation(
         Entity<CardsComponent> merger,
         Entity<CardsComponent> mergee,
+        List<CardData> selected,
+        bool playOnUser = false
+    )
+    {
+        if (!TryComp<StackComponent>(mergee.Owner, out var originalStackComp))
+            return;
+        var Xform = Transform(mergee.Owner);
+        PlayCardAnimation(
+            Transform(merger).Coordinates,
+            mergee.Comp.Flipped,
+            Xform.Coordinates,
+            Xform.LocalRotation,
+            originalStackComp.StackTypeId,
+            selected,
+            playOnUser: playOnUser
+        );
+    }
+
+    protected abstract void PlayCardAnimation(
+        EntityCoordinates mergerCoords,
+        bool mergeeFlipped,
+        EntityCoordinates mergeeCoords,
+        Angle mergeeRotation,
+        ProtoId<StackPrototype> stackId,
         List<CardData> selected,
         bool playOnUser = false
     );
@@ -114,14 +140,27 @@ public sealed class CardListVisualState : ICloneable
 [Serializable, NetSerializable]
 public sealed class CardAnimationEvent : EntityEventArgs
 {
-    public readonly NetEntity Mergee;
-    public readonly NetEntity Merger;
+    public readonly NetCoordinates MergerCoords;
+    public readonly bool MergeeFlipped;
+    public readonly NetCoordinates MergeeCoords;
+    public readonly Angle MergeeRotation;
+    public readonly ProtoId<StackPrototype> StackId;
     public readonly List<CardData> Selected;
 
-    public CardAnimationEvent(NetEntity merger, NetEntity mergee, List<CardData> selected)
+    public CardAnimationEvent(
+        NetCoordinates mergerCoords,
+        bool mergeeFlipped,
+        NetCoordinates mergeeCoords,
+        Angle mergeeRotation,
+        ProtoId<StackPrototype> stackId,
+        List<CardData> selected
+    )
     {
-        Mergee = mergee;
-        Merger = merger;
+        MergerCoords = mergerCoords;
+        MergeeFlipped = mergeeFlipped;
+        MergeeCoords = mergeeCoords;
+        MergeeRotation = mergeeRotation;
+        StackId = stackId;
         Selected = selected;
     }
 }

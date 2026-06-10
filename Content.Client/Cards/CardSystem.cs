@@ -71,51 +71,45 @@ public sealed partial class CardSystem : SharedCardSystem
 
     private void HandleCardAnimation(CardAnimationEvent args)
     {
-        var merger = GetEntity(args.Merger);
-        var mergee = GetEntity(args.Mergee);
-
-        if (
-            !TryComp<CardsComponent>(merger, out var mergerComp) || !TryComp<CardsComponent>(mergee, out var mergeeComp)
-        )
-            return;
-
-        PlayCardAnimation((merger, mergerComp), (mergee, mergeeComp), args.Selected);
+        PlayCardAnimation(
+            GetCoordinates(args.MergerCoords),
+            args.MergeeFlipped,
+            GetCoordinates(args.MergeeCoords),
+            args.MergeeRotation,
+            args.StackId,
+            args.Selected
+        );
     }
 
     protected override void PlayCardAnimation(
-        Entity<CardsComponent> merger,
-        Entity<CardsComponent> mergee,
+        EntityCoordinates mergerCoords,
+        bool mergeeFlipped,
+        EntityCoordinates mergeeCoords,
+        Angle mergeeRotation,
+        ProtoId<StackPrototype> newStackId,
         List<CardData> selected,
         bool playOnUser = false
     )
     {
-        if (Timing.ApplyingState)
+        if (!Timing.IsFirstTimePredicted)
             return;
-
-        var mergeeXform = Transform(mergee.Owner);
-        var ent = SpawnTempClone(mergee, mergeeXform.Coordinates, selected);
+        Log.Info("A");
+        var ent = SpawnTempClone(mergeeFlipped, mergeeCoords, newStackId, selected);
         if (ent == EntityUid.Invalid)
             return;
-
-        _storage.PlayPickupAnimation(
-            ent,
-            mergeeXform.Coordinates,
-            Transform(merger.Owner).Coordinates,
-            mergeeXform.LocalRotation
-        );
+        Log.Info("B");
+        _storage.PlayPickupAnimation(ent, mergeeCoords, mergerCoords, mergeeRotation);
         QueueDel(ent);
     }
 
     private EntityUid SpawnTempClone(
-        Entity<CardsComponent> mergee,
+        bool mergeeFlipped,
         EntityCoordinates mergeeCoords,
+        ProtoId<StackPrototype> newStackId,
         List<CardData> selected
     )
     {
-        if (
-            !TryComp<StackComponent>(mergee.Owner, out var originalStackComp)
-            || !_prototypeManager.TryIndex(originalStackComp.StackTypeId, out var newStack)
-        )
+        if (!_prototypeManager.TryIndex(newStackId, out var newStack))
             return EntityUid.Invalid;
 
         var ent = Spawn(newStack.Spawn, mergeeCoords);
@@ -131,7 +125,7 @@ public sealed partial class CardSystem : SharedCardSystem
         }
 
         cardsComp.Cards = selected;
-        cardsComp.Flipped = mergee.Comp.Flipped;
+        cardsComp.Flipped = mergeeFlipped;
         Stacks.SetCount((ent, stackComp), cardsComp.Cards.Count);
         if (TryComp<SpriteComponent>(ent, out var sprite))
             _sprite.SetDrawDepth((ent, sprite), (int)DrawDepth.BelowMobs);

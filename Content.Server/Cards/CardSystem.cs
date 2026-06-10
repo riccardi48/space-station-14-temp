@@ -1,6 +1,7 @@
 using Content.Shared.Cards;
 using Content.Shared.Stacks;
 using JetBrains.Annotations;
+using Robust.Shared.Map;
 using Robust.Shared.Player;
 using Robust.Shared.Prototypes;
 
@@ -32,18 +33,26 @@ public sealed partial class CardSystem : SharedCardSystem
     }
 
     protected override void PlayCardAnimation(
-        Entity<CardsComponent> merger,
-        Entity<CardsComponent> mergee,
+        EntityCoordinates mergerCoords,
+        bool mergeeFlipped,
+        EntityCoordinates mergeeCoords,
+        Angle mergeeRotation,
+        ProtoId<StackPrototype> stackId,
         List<CardData> selected,
         bool playOnUser = false
     )
     {
-        var ev = new CardAnimationEvent(GetNetEntity(merger.Owner), GetNetEntity(mergee.Owner), selected);
+        var ev = new CardAnimationEvent(
+            GetNetCoordinates(mergerCoords),
+            mergeeFlipped,
+            GetNetCoordinates(mergeeCoords),
+            mergeeRotation,
+            stackId,
+            selected
+        );
         var filter = Filter
-            .Pvs(merger.Owner)
-            .RemoveWhereAttachedEntity(e =>
-                (e == Transform(merger.Owner).ParentUid || e == Transform(mergee.Owner).ParentUid) && !playOnUser
-            );
+            .Pvs(mergerCoords)
+            .RemoveWhereAttachedEntity(e => !playOnUser && (e == mergerCoords.EntityId || e == mergeeCoords.EntityId));
         RaiseNetworkEvent(ev, filter);
     }
 }
