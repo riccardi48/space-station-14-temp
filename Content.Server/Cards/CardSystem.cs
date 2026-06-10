@@ -22,14 +22,12 @@ public sealed partial class CardSystem : SharedCardSystem
     {
         var mergee = GetEntity(args.Mergee);
         var merger = GetEntity(args.Merger);
+
         if (
             TryComp<StackComponent>(mergee, out var donorStack)
             && TryComp<StackComponent>(merger, out var recipientStack)
-            && Stacks.TryMergeStacks((mergee, donorStack), (merger, recipientStack), out var transferred)
         )
-        {
-            return;
-        }
+            Stacks.TryMergeStacks((mergee, donorStack), (merger, recipientStack), out _);
     }
 
     protected override void PlayCardAnimation(

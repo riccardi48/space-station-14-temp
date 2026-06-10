@@ -23,9 +23,6 @@ public sealed partial class CardSystem : SharedCardSystem
     private SharedStorageSystem _storage = default!;
 
     [Dependency]
-    private SharedStackSystem _stack = default!;
-
-    [Dependency]
     private SpriteSystem _sprite = default!;
 
     [Dependency]
@@ -33,9 +30,6 @@ public sealed partial class CardSystem : SharedCardSystem
 
     [Dependency]
     private IStateManager _stateManager = default!;
-
-    [Dependency]
-    private IEyeManager _eyeManager = default!;
 
     public override void Initialize()
     {
@@ -48,23 +42,23 @@ public sealed partial class CardSystem : SharedCardSystem
 
     private void OnCardsDropped(Entity<CardsComponent> ent, ref DroppedEvent args)
     {
-        var currentState = _stateManager.CurrentState;
-        if (currentState is not GameplayStateBase screen)
+        if (_stateManager.CurrentState is not GameplayStateBase screen)
             return;
+
         var uid = screen
             .GetClickableEntities(Transform(ent).Coordinates)
             .FirstOrDefault(e => e != ent.Owner && TryComp<CardsComponent>(e, out _));
+
         if (
-            uid != ent.Owner
-            && TryComp<CardsComponent>(uid, out var cardComp)
-            && TryComp<StackComponent>(ent.Owner, out var donorStack)
-            && TryComp<StackComponent>(uid, out var recipientStack)
-            && Stacks.TryMergeStacks((ent.Owner, donorStack), (uid, recipientStack), out _)
+            !TryComp<CardsComponent>(uid, out _)
+            || !TryComp<StackComponent>(ent.Owner, out var donorStack)
+            || !TryComp<StackComponent>(uid, out var recipientStack)
+            || !Stacks.TryMergeStacks((ent.Owner, donorStack), (uid, recipientStack), out _)
         )
-        {
-            if (Timing.IsFirstTimePredicted)
-                RaisePredictiveEvent(new CardDropMergeEvent(GetNetEntity(uid), GetNetEntity(ent.Owner)));
-        }
+            return;
+
+        if (Timing.IsFirstTimePredicted)
+            RaisePredictiveEvent(new CardDropMergeEvent(GetNetEntity(uid), GetNetEntity(ent.Owner)));
     }
 
     private void HandleCardAnimation(CardAnimationEvent args)
@@ -91,11 +85,11 @@ public sealed partial class CardSystem : SharedCardSystem
     {
         if (!Timing.IsFirstTimePredicted)
             return;
-        Log.Info("A");
+
         var ent = SpawnTempClone(mergeeFlipped, mergeeCoords, newStackId, selected);
         if (ent == EntityUid.Invalid)
             return;
-        Log.Info("B");
+
         _storage.PlayPickupAnimation(ent, mergeeCoords, mergerCoords, mergeeRotation);
         QueueDel(ent);
     }
@@ -125,8 +119,8 @@ public sealed partial class CardSystem : SharedCardSystem
         cardsComp.Cards = selected;
         cardsComp.Flipped = mergeeFlipped;
         Stacks.SetCount((ent, stackComp), cardsComp.Cards.Count);
-        if (TryComp<SpriteComponent>(ent, out var sprite))
-            _sprite.SetDrawDepth((ent, sprite), (int)DrawDepth.BelowMobs);
+        _sprite.SetDrawDepth((ent, spriteComp), (int)DrawDepth.BelowMobs);
+
         if (TryComp<AppearanceComponent>(ent, out var appearance))
         {
             Appearance.SetData(ent, CardVisuals.CardList, GetCardListVisualState(cardsComp), appearance);
@@ -184,7 +178,7 @@ public sealed partial class CardSystem : SharedCardSystem
             if (!_prototypeManager.TryIndex<CardPrototype>(card.CardId, out var prototype))
                 continue;
 
-            var angle = (i - count / 2.0 + 0.5) / count * Math.PI;
+            float angle = (i - count / 2.0f + 0.5f) / count * (float)Math.PI;
             var position = FanPosition(angle, radius);
             var rotation = new Angle(-angle);
 

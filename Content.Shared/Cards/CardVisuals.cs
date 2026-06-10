@@ -17,17 +17,14 @@ public abstract partial class SharedCardSystem
 
     private void OnCardsExamined(Entity<CardsComponent> ent, ref ExaminedEvent args)
     {
-        if (!args.IsInDetailsRange)
+        if (!args.IsInDetailsRange || !ent.Comp.Flipped)
             return;
 
-        if (ent.Comp.Flipped)
-        {
-            var cards = GetCardListVisualState(ent.Comp);
-            var cardName = (string)cards.CardList.Last().CardId;
-            args.PushMarkup(
-                Loc.GetString("comp-cards-examine-detail", ("card", Loc.GetString(cardName.Replace('_', '-'))))
-            );
-        }
+        var cards = GetCardListVisualState(ent.Comp);
+        var cardName = (string)cards.CardList.Last().CardId;
+        args.PushMarkup(
+            Loc.GetString("comp-cards-examine-detail", ("card", Loc.GetString(cardName.Replace('_', '-'))))
+        );
     }
 
     private void OnStackCountChanged(Entity<CardsComponent> ent, ref StackCountChangedEvent args)
@@ -91,12 +88,13 @@ public abstract partial class SharedCardSystem
     {
         if (!TryComp<StackComponent>(mergee.Owner, out var originalStackComp))
             return;
-        var Xform = Transform(mergee.Owner);
+
+        var xform = Transform(mergee.Owner);
         PlayCardAnimation(
             Transform(merger).Coordinates,
             mergee.Comp.Flipped,
-            Xform.Coordinates,
-            Xform.LocalRotation,
+            xform.Coordinates,
+            xform.LocalRotation,
             originalStackComp.StackTypeId,
             selected,
             playOnUser: playOnUser
@@ -131,10 +129,7 @@ public sealed class CardListVisualState : ICloneable
         CardList = cardList;
     }
 
-    public object Clone()
-    {
-        return new CardListVisualState(CardList);
-    }
+    public object Clone() => new CardListVisualState(CardList);
 }
 
 [Serializable, NetSerializable]

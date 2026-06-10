@@ -26,6 +26,7 @@ public sealed class CardsTest : GameTest
 
     [SidedDependency(Side.Server)]
     private readonly TransformSystem _sTransform = null!;
+
     private const string CardsProtoId = "cardDeck";
 
     [Test]
@@ -39,89 +40,83 @@ public sealed class CardsTest : GameTest
             using (Assert.EnterMultipleScope())
             {
                 var player = SSpawnAtPosition("MobHuman", coordinates);
-
                 var cards = SSpawnAtPosition(CardsProtoId, coordinates);
 
-                int cardCountBefore;
-                int stackCountBefore;
-
                 if (!SEntMan.TryGetComponent<CardsComponent>(cards, out var cardsComp))
-                    Assert.Fail($"Missing Comp");
+                    Assert.Fail("Missing CardsComponent");
                 if (!SEntMan.TryGetComponent<StackComponent>(cards, out var stackComp))
-                    Assert.Fail();
+                    Assert.Fail("Missing StackComponent");
 
-                cardCountBefore = cardsComp.Cards.Count;
-                stackCountBefore = stackComp.Count;
+                var cardCountBefore = cardsComp.Cards.Count;
+                var stackCountBefore = stackComp.Count;
+
                 _sCards.TryShuffleCards((cards, cardsComp));
-
                 Assert.That(cardsComp.Cards.Count, Is.EqualTo(cardCountBefore));
                 Assert.That(stackComp.Count, Is.EqualTo(stackCountBefore));
 
                 _sCards.TryFlipCards((cards, cardsComp));
-
                 Assert.That(cardsComp.Cards.Count, Is.EqualTo(cardCountBefore));
                 Assert.That(stackComp.Count, Is.EqualTo(stackCountBefore));
 
                 _sCards.TryFanCards((cards, cardsComp));
-
                 Assert.That(cardsComp.Cards.Count, Is.EqualTo(cardCountBefore));
                 Assert.That(stackComp.Count, Is.EqualTo(stackCountBefore));
 
                 if (!SEntMan.TryGetComponent<TransformComponent>(player, out var playerTransformComp))
-                    Assert.Fail($"No Cards Prototype with name {cards}");
+                    Assert.Fail("Missing player TransformComponent");
 
                 _sCards.TryTakeCard((cards, cardsComp), (player, playerTransformComp), 20, out var split);
                 if (split == null)
-                    Assert.Fail();
+                    Assert.Fail("TryTakeCard returned null split");
                 if (!SEntMan.TryGetComponent<CardsComponent>(split, out var splitCardsComp))
-                    Assert.Fail();
+                    Assert.Fail("Missing CardsComponent on split");
                 if (!SEntMan.TryGetComponent<StackComponent>(split, out var splitStackComp))
-                    Assert.Fail();
+                    Assert.Fail("Missing StackComponent on split");
                 if (_sHands.GetActiveItem(player) != split)
-                    Assert.Fail();
+                    Assert.Fail("Split card not in active hand");
 
                 Assert.That(cardsComp.Cards.Count + splitCardsComp.Cards.Count, Is.EqualTo(cardCountBefore));
                 Assert.That(stackComp.Count + splitStackComp.Count, Is.EqualTo(stackCountBefore));
 
-                if (!_sStacks.TryMergeStacks((cards, stackComp), (split.Value, splitStackComp), out var transferred))
-                    Assert.Fail();
+                if (!_sStacks.TryMergeStacks((cards, stackComp), (split.Value, splitStackComp), out _))
+                    Assert.Fail("TryMergeStacks failed");
 
                 Assert.That(splitCardsComp.Cards.Count, Is.EqualTo(cardCountBefore));
                 Assert.That(splitStackComp.Count, Is.EqualTo(stackCountBefore));
 
+                // Pivot to the merged stack for remaining operations
                 cards = split.Value;
                 cardsComp = splitCardsComp;
                 stackComp = splitStackComp;
 
                 if (!SEntMan.TryGetComponent<HandsComponent>(player, out var handsComp))
-                    Assert.Fail();
+                    Assert.Fail("Missing HandsComponent");
                 if (!SEntMan.TryGetComponent<TransformComponent>(player, out var playerTransComp))
-                    Assert.Fail();
+                    Assert.Fail("Missing player TransformComponent");
+
                 _sHands.SwapHands((player, handsComp));
 
                 _sStacks.UserSplit((cards, stackComp), (player, playerTransComp), 20);
                 split = _sHands.GetActiveItem(player);
                 if (!SEntMan.TryGetComponent<CardsComponent>(split, out splitCardsComp))
-                    Assert.Fail();
+                    Assert.Fail("Missing CardsComponent on second split");
                 if (!SEntMan.TryGetComponent<StackComponent>(split, out splitStackComp))
-                    Assert.Fail();
+                    Assert.Fail("Missing StackComponent on second split");
 
                 Assert.That(cardsComp.Cards.Count + splitCardsComp.Cards.Count, Is.EqualTo(cardCountBefore));
                 Assert.That(stackComp.Count + splitStackComp.Count, Is.EqualTo(stackCountBefore));
 
                 _sStacks.UserSplit((cards, stackComp), (player, playerTransComp), 20);
-
                 Assert.That(cardsComp.Cards.Count + splitCardsComp.Cards.Count, Is.EqualTo(cardCountBefore));
                 Assert.That(stackComp.Count + splitStackComp.Count, Is.EqualTo(stackCountBefore));
 
-                if (!_sStacks.TryMergeStacks((cards, stackComp), (split.Value, splitStackComp), out transferred))
-                    Assert.Fail();
+                if (!_sStacks.TryMergeStacks((cards, stackComp), (split.Value, splitStackComp), out _))
+                    Assert.Fail("Second TryMergeStacks failed");
 
+                // Pivot to final merged stack
                 cards = split.Value;
                 cardsComp = splitCardsComp;
                 stackComp = splitStackComp;
-                var coords = _sTransform.GetMapCoordinates(player).Offset(new Vector2(0, 10));
-                // _sHands.ThrowHeldItem(player, _sTransform.ToCoordinates(player, coords));
             }
         });
     }
@@ -138,27 +133,25 @@ public sealed class CardsInteractionTest : InteractionTest
         var cards = await SpawnTarget(CardsProtoId);
 
         if (!SEntMan.TryGetComponent<CardsComponent>(SEntMan.GetEntity(cards), out var sCardsComp))
-            Assert.Fail($"Missing Comp");
+            Assert.Fail("Missing CardsComponent");
         if (!SEntMan.TryGetComponent<StackComponent>(SEntMan.GetEntity(cards), out var sStackComp))
-            Assert.Fail($"Missing Comp");
+            Assert.Fail("Missing StackComponent");
 
-        int cardCountBefore = sCardsComp.Cards.Count;
-        int stackCountBefore = sStackComp.Count;
+        var cardCountBefore = sCardsComp.Cards.Count;
+        var stackCountBefore = sStackComp.Count;
 
         await Pickup();
 
-        // Flip the deck of cards
+        // Flip the deck
         await UseInHand();
-
         Assert.That(sCardsComp.Flipped, Is.EqualTo(true));
 
-        // Fans the deck of cards
+        // Fan the deck
         await UseInHand();
-
         Assert.That(sCardsComp.Flipped, Is.EqualTo(true));
         Assert.That(sCardsComp.Fanned, Is.EqualTo(true));
 
-        // Throw One Card
+        // Throw one card
         var coords = Transform.GetMapCoordinates(CPlayer).Offset(new Vector2(0, 10));
         await ThrowItem(SEntMan.GetNetCoordinates(Transform.ToCoordinates(CPlayer, coords)));
 

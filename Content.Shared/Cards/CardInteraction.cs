@@ -79,6 +79,7 @@ public abstract partial class SharedCardSystem
                 }
             );
         }
+
         if (ent.Comp.Fanned && Hands.GetActiveItem(user) != ent.Owner)
         {
             var priority = -200;
@@ -102,14 +103,14 @@ public abstract partial class SharedCardSystem
             }
             else
             {
-                var rand = SharedRandomExtensions.PredictedRandom(Timing, GetNetEntity(ent));
-                int randomDoublePredicted = rand.Next(ent.Comp.Cards.Count);
-                Log.Info($"{randomDoublePredicted}");
+                var randomIndex = SharedRandomExtensions
+                    .PredictedRandom(Timing, GetNetEntity(ent))
+                    .Next(ent.Comp.Cards.Count);
                 args.Verbs.Add(
                     new AlternativeVerb
                     {
                         Text = Loc.GetString("comp-cards-random-card"),
-                        Act = () => TryTakeCard(ent, user, randomDoublePredicted, out _),
+                        Act = () => TryTakeCard(ent, user, randomIndex, out _),
                         Priority = priority,
                     }
                 );
