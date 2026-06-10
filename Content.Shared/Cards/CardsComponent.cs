@@ -1,3 +1,4 @@
+using System.Linq;
 using Robust.Shared.Audio;
 using Robust.Shared.GameStates;
 using Robust.Shared.Prototypes;
@@ -12,6 +13,12 @@ public sealed partial class CardsComponent : Component
 
     [ViewVariables, AutoNetworkedField]
     public List<CardData> Cards { get; set; } = new();
+
+    [ViewVariables]
+    public int NumberOfCards => Cards.Count;
+
+    [ViewVariables]
+    public List<string> CardPrototypes => Cards.Select(c => (string)c.CardId).ToList();
 
     [DataField, AutoNetworkedField]
     public bool Flipped = false;

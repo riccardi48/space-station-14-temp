@@ -59,9 +59,9 @@ public sealed partial class CardSystem : SharedCardSystem
         if (
             uid != ent.Owner
             && TryComp<CardsComponent>(uid, out var cardComp)
-            && TryComp<StackComponent>(ent.Owner, out var donerStack)
+            && TryComp<StackComponent>(ent.Owner, out var donorStack)
             && TryComp<StackComponent>(uid, out var recipientStack)
-            && Stacks.TryMergeStacks((ent.Owner, donerStack), (uid, recipientStack), out _)
+            && Stacks.TryMergeStacks((ent.Owner, donorStack), (uid, recipientStack), out _)
         )
         {
             if (Timing.IsFirstTimePredicted)
@@ -85,7 +85,8 @@ public sealed partial class CardSystem : SharedCardSystem
     protected override void PlayCardAnimation(
         Entity<CardsComponent> merger,
         Entity<CardsComponent> mergee,
-        List<CardData> selected
+        List<CardData> selected,
+        bool playOnUser = false
     )
     {
         if (Timing.ApplyingState)

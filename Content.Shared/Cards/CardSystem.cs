@@ -59,9 +59,11 @@ public abstract partial class SharedCardSystem : EntitySystem
     private void OnCardsInit(Entity<CardsComponent> ent, ref ComponentInit args)
     {
         if (ent.Comp.Cards.Count == 0)
+        {
             ent.Comp.Cards = ent
                 .Comp._cards.Select(protoId => new CardData(protoId, ent.Comp.BaseState, ent.Comp.CardBack))
                 .ToList();
+        }
     }
 
     private void OnMergeEvent(Entity<CardsComponent> ent, ref MergeEvent args)
@@ -91,7 +93,7 @@ public abstract partial class SharedCardSystem : EntitySystem
             return;
 
         var delta = splitStackComp.Count;
-        PlayCardDrawAnimation((args.NewId, splitComp), ent, delta);
+        PlayCardDrawAnimation((args.NewId, splitComp), ent, delta, playOnUser: true);
         TakeFromDeck(splitComp, ent.Comp, delta);
         splitComp.Flipped = ent.Comp.Flipped;
         splitComp.Fanned = ent.Comp.Fanned;

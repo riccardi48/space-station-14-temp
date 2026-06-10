@@ -58,22 +58,33 @@ public abstract partial class SharedCardSystem
         return new CardListVisualState(selected.ToList());
     }
 
-    protected void PlayCardDrawAnimation(Entity<CardsComponent> merger, Entity<CardsComponent> mergee, int delta)
+    protected void PlayCardDrawAnimation(
+        Entity<CardsComponent> merger,
+        Entity<CardsComponent> mergee,
+        int delta,
+        bool playOnUser = false
+    )
     {
         var selected = MovedCards(mergee.Comp, delta);
-        PlayCardAnimation(merger, mergee, selected);
+        PlayCardAnimation(merger, mergee, selected, playOnUser: playOnUser);
     }
 
-    protected void PlayCardTakeAnimation(Entity<CardsComponent> merger, Entity<CardsComponent> mergee, int cardInx)
+    protected void PlayCardTakeAnimation(
+        Entity<CardsComponent> merger,
+        Entity<CardsComponent> mergee,
+        int cardInx,
+        bool playOnUser = false
+    )
     {
         List<CardData> selected = new List<CardData> { mergee.Comp.Cards[cardInx] };
-        PlayCardAnimation(merger, mergee, selected);
+        PlayCardAnimation(merger, mergee, selected, playOnUser: playOnUser);
     }
 
     protected abstract void PlayCardAnimation(
         Entity<CardsComponent> merger,
         Entity<CardsComponent> mergee,
-        List<CardData> selected
+        List<CardData> selected,
+        bool playOnUser = false
     );
 }
 
