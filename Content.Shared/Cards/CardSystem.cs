@@ -172,7 +172,7 @@ public abstract partial class SharedCardSystem : EntitySystem
     )
     {
         split = null;
-        if (!cards.Comp.Fanned || !cards.Comp.Flipped)
+        if (!cards.Comp.Fanned)
             return false;
         if (!Resolve(user.Owner, ref user.Comp, false) || !TryComp<StackComponent>(cards.Owner, out var stackComp))
             return false;

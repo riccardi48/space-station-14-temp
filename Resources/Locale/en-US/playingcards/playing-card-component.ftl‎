@@ -2,6 +2,7 @@ comp-cards-fan = Fan
 comp-cards-shuffle = Shuffle
 comp-cards-flip = Flip
 verb-categories-take-card = Take Card
+comp-cards-random-card = Take Random Card
 
 ace-of-clubs = Ace of Clubs
 two-of-clubs = 2 of Clubs

@@ -1,6 +1,7 @@
 using System.Linq;
 using Content.Shared.Interaction;
 using Content.Shared.Interaction.Events;
+using Content.Shared.Random.Helpers;
 using Content.Shared.Stacks;
 using Content.Shared.Verbs;
 
@@ -81,18 +82,35 @@ public abstract partial class SharedCardSystem
         if (ent.Comp.Fanned && Hands.GetActiveItem(user) != ent.Owner)
         {
             var priority = -200;
-            for (var i = 0; i < ent.Comp.Cards.Count; i++)
+            if (ent.Comp.Flipped)
             {
-                var index = ent.Comp.Cards.Count - i - 1;
-                var card = ent.Comp.Cards[index];
+                for (var i = 0; i < ent.Comp.Cards.Count; i++)
+                {
+                    var index = ent.Comp.Cards.Count - i - 1;
+                    var card = ent.Comp.Cards[index];
 
+                    args.Verbs.Add(
+                        new AlternativeVerb
+                        {
+                            Text = Loc.GetString(card.CardId.ToString().Replace('_', '-')),
+                            Act = () => TryTakeCard(ent, user, index, out _),
+                            Category = VerbCategory.TakeCard,
+                            Priority = priority--,
+                        }
+                    );
+                }
+            }
+            else
+            {
+                var rand = SharedRandomExtensions.PredictedRandom(Timing, GetNetEntity(ent));
+                int randomDoublePredicted = rand.Next(ent.Comp.Cards.Count);
+                Log.Info($"{randomDoublePredicted}");
                 args.Verbs.Add(
                     new AlternativeVerb
                     {
-                        Text = Loc.GetString(card.CardId.ToString().Replace('_', '-')),
-                        Act = () => TryTakeCard(ent, user, index, out _),
-                        Category = VerbCategory.TakeCard,
-                        Priority = priority--,
+                        Text = Loc.GetString("comp-cards-random-card"),
+                        Act = () => TryTakeCard(ent, user, randomDoublePredicted, out _),
+                        Priority = priority,
                     }
                 );
             }
