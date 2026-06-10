@@ -21,16 +21,16 @@ public sealed partial class CardsComponent : Component
     public List<string> CardPrototypes => Cards.Select(c => (string)c.CardId).ToList();
 
     [DataField, AutoNetworkedField]
-    public bool Flipped = false;
+    public bool Flipped;
 
     [DataField, AutoNetworkedField]
-    public bool Fanned = false;
+    public bool Fanned;
 
     [DataField, AutoNetworkedField]
     public int MaxFanned = 10;
 
     [AutoNetworkedField]
-    public bool BeingCherryPicked = false;
+    public bool BeingCherryPicked;
 
     [DataField, AutoNetworkedField]
     public SoundSpecifier ShuffleSound = new SoundPathSpecifier("/Audio/Effects/cardshuffle.ogg");
