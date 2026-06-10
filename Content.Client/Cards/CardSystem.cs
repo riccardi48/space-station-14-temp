@@ -48,8 +48,6 @@ public sealed partial class CardSystem : SharedCardSystem
 
     private void OnCardsDropped(Entity<CardsComponent> ent, ref DroppedEvent args)
     {
-        if (args.User != EntityUid.Invalid)
-            return;
         var currentState = _stateManager.CurrentState;
         if (currentState is not GameplayStateBase screen)
             return;
