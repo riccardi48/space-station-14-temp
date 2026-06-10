@@ -94,10 +94,9 @@ namespace Content.Client.Hands.Systems
             string handId,
             bool doDropInteraction = true,
             bool log = true,
-            EntityCoordinates? targetDropLocation = null,
-            Angle? targetDropRotation = null)
+            EntityCoordinates? targetDropLocation = null)
         {
-            base.DoDrop(ent, handId, doDropInteraction, log, targetDropLocation, targetDropRotation);
+            base.DoDrop(ent, handId, doDropInteraction, log, targetDropLocation);
 
             if (TryGetHeldItem(ent, handId, out var held) && TryComp(held, out SpriteComponent? sprite))
                 sprite.RenderOrder = EntityManager.CurrentTick.Value;
