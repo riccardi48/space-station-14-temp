@@ -251,8 +251,7 @@ public abstract partial class SharedStackSystem : EntitySystem
             return;
 
         Hands.PickupOrDrop(user.Owner, split);
-        if (_timing.IsFirstTimePredicted)
-            Popup.PopupCursor(Loc.GetString("comp-stack-split"), user.Owner);
+        Popup.PopupCursor(Loc.GetString("comp-stack-split"), user.Owner);
     }
 
     /// <summary>

@@ -30,7 +30,7 @@ public abstract partial class SharedCardSystem
 
     private void OnStackCountChanged(Entity<CardsComponent> ent, ref StackCountChangedEvent args)
     {
-        if (!ent.Comp.Fanned)
+        if (!ent.Comp.Fanned || args.NewCount == 0)
             return;
         UpdateStackCount(ent);
     }
@@ -47,7 +47,6 @@ public abstract partial class SharedCardSystem
         if (TryComp<AppearanceComponent>(ent, out var appearance))
         {
             Appearance.SetData(ent, CardVisuals.CardList, GetCardListVisualState(ent.Comp), appearance);
-            Appearance.SetData(ent, CardVisuals.IsFlipped, ent.Comp.Flipped, appearance);
             Appearance.SetData(ent, CardVisuals.IsFlipped, ent.Comp.Flipped, appearance);
         }
     }

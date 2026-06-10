@@ -54,9 +54,10 @@ public abstract partial class SharedCardSystem : EntitySystem
 
     private void OnCardsInit(Entity<CardsComponent> ent, ref ComponentInit args)
     {
-        ent.Comp.Cards = ent
-            .Comp._cards.Select(protoId => new CardData(protoId, ent.Comp.BaseState, ent.Comp.CardBack))
-            .ToList();
+        if (ent.Comp.Cards.Count == 0)
+            ent.Comp.Cards = ent
+                .Comp._cards.Select(protoId => new CardData(protoId, ent.Comp.BaseState, ent.Comp.CardBack))
+                .ToList();
     }
 
     private void OnMergeEvent(Entity<CardsComponent> ent, ref MergeEvent args)
