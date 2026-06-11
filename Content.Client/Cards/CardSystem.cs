@@ -152,6 +152,21 @@ public sealed partial class CardSystem : SharedCardSystem
     // Radius is 0 when one card so individual cards can't be fanned
     private static float FanRadius(int count) => count <= 1 ? 0f : (float)Math.Sqrt(count / 20f);
 
+    public static (Vector2, Angle) GetCardPosRot(int inx, int count)
+    {
+        var radius = FanRadius(count);
+        return GetCardPosRot(inx, count, radius);
+    }
+
+    public static (Vector2, Angle) GetCardPosRot(int inx, int count, float radius)
+    {
+        // Semi-circle from left to right
+        float angle = (inx - count / 2.0f + 0.5f) / count * (float)Math.PI;
+        var position = FanPosition(angle, radius);
+        var rotation = new Angle(-angle);
+        return (position, rotation);
+    }
+
     // Radius is 0 when one card so individual cards can't be fanned
     private static (string Base, string LayerOne, string LayerTwo) CardLayers(int i) =>
         ($"card_{i}_base", $"card_{i}_layerOne", $"card_{i}_layerTwo");
@@ -192,10 +207,7 @@ public sealed partial class CardSystem : SharedCardSystem
             if (!_prototypeManager.TryIndex<CardPrototype>(card.CardId, out var prototype))
                 continue;
 
-            // Semi-circle from left to right
-            float angle = (i - count / 2.0f + 0.5f) / count * (float)Math.PI;
-            var position = FanPosition(angle, radius);
-            var rotation = new Angle(-angle);
+            var (position, rotation) = GetCardPosRot(i, count, radius);
 
             // Creates layers
             _sprite.LayerMapReserve((uid, sprite), baseLayer);
@@ -216,9 +228,10 @@ public sealed partial class CardSystem : SharedCardSystem
                 _sprite.LayerSetVisible((uid, sprite), layerOne, false);
                 _sprite.LayerSetVisible((uid, sprite), layerTwo, false);
             }
-
+            // Moves the shared layer
             TransformLayer(baseLayer, position, rotation, (uid, sprite));
 
+            // Moves the stack texture below the left most card
             if (i == 0)
                 TransformLayer("base", position, rotation, (uid, sprite));
         }
