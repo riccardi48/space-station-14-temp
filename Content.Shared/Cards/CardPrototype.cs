@@ -19,4 +19,10 @@ public sealed partial class CardPrototype : IPrototype
 
     [DataField("layerTwoColor")]
     public Color? LayerTwoColor { get; private set; }
+
+    [DataField("layerBaseState")]
+    public string? LayerBaseState { get; private set; }
+
+    [DataField("layerBaseColor")]
+    public Color? LayerBaseColor { get; private set; }
 }

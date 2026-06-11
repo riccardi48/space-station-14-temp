@@ -45,6 +45,7 @@ public sealed partial class CardSystem : SharedCardSystem
         if (_stateManager.CurrentState is not GameplayStateBase screen)
             return;
 
+        // Find stack to merge with
         var uid = screen
             .GetClickableEntities(Transform(ent).Coordinates)
             .FirstOrDefault(e => e != ent.Owner && TryComp<CardsComponent>(e, out _));
@@ -86,6 +87,7 @@ public sealed partial class CardSystem : SharedCardSystem
         if (!Timing.IsFirstTimePredicted)
             return;
 
+        // Spawns an invisible client side clone to apply the sprite to for the cards which are being transferred
         var ent = SpawnTempClone(mergeeFlipped, mergeeCoords, newStackId, selected);
         if (ent == EntityUid.Invalid)
             return;
@@ -126,6 +128,8 @@ public sealed partial class CardSystem : SharedCardSystem
             Appearance.SetData(ent, CardVisuals.CardList, GetCardListVisualState(cardsComp), appearance);
             Appearance.SetData(ent, CardVisuals.IsFlipped, cardsComp.Flipped, appearance);
 
+            // Appearance only changes on Update
+            // As this clone is deleted shortly after need to update the sprite now
             var ev = new AppearanceChangeEvent
             {
                 Component = appearance,
@@ -139,11 +143,15 @@ public sealed partial class CardSystem : SharedCardSystem
         return ent;
     }
 
+    // Position of cards in fan
+    // Semi-circle shifted down to centre it
     private static Vector2 FanPosition(double angle, float radius) =>
         new((float)Math.Sin(angle) * radius, (float)Math.Cos(angle) * radius - radius * (3f / 4f));
 
+    // Radius is 0 when one card so individual cards can't be fanned
     private static float FanRadius(int count) => count <= 1 ? 0f : (float)Math.Sqrt(count / 20f);
 
+    // Radius is 0 when one card so individual cards can't be fanned
     private static (string Base, string LayerOne, string LayerTwo) CardLayers(int i) =>
         ($"card_{i}_base", $"card_{i}_layerOne", $"card_{i}_layerTwo");
 
@@ -151,13 +159,21 @@ public sealed partial class CardSystem : SharedCardSystem
     {
         Appearance.TryGetData<bool>(uid, CardVisuals.IsFlipped, out var flipped, args.Component);
 
+        // Card visuals state will only have one card in it if not fanned
+        // It will have a max of MaxFanned when fanned
         if (!Appearance.TryGetData<CardListVisualState>(uid, CardVisuals.CardList, out var visualState, args.Component))
             visualState = new CardListVisualState(new List<CardData>());
 
         if (!TryComp<SpriteComponent>(uid, out var sprite) || !TryComp<CardsComponent>(uid, out var cards))
             return;
 
-        for (var i = 0; i < cards.MaxFanned; i++)
+        var count = visualState.CardList.Count;
+        var radius = FanRadius(count);
+
+        // Delete all layers which are not used here
+        // Assumes that all layers will have the card before it have a layer
+        // If it runs into a layer which doesn't exists it assumes no more later layers will exists
+        for (var i = count; i < cards.MaxFanned; i++)
         {
             var (baseLayer, layerOne, layerTwo) = CardLayers(i);
             if (!_sprite.LayerExists((uid, sprite), baseLayer))
@@ -167,9 +183,6 @@ public sealed partial class CardSystem : SharedCardSystem
             _sprite.RemoveLayer((uid, sprite), layerTwo, false);
         }
 
-        var count = visualState.CardList.Count;
-        var radius = FanRadius(count);
-
         for (var i = 0; i < count; i++)
         {
             var card = visualState.CardList[i];
@@ -178,22 +191,30 @@ public sealed partial class CardSystem : SharedCardSystem
             if (!_prototypeManager.TryIndex<CardPrototype>(card.CardId, out var prototype))
                 continue;
 
+            // Semi-circle from left to right
             float angle = (i - count / 2.0f + 0.5f) / count * (float)Math.PI;
             var position = FanPosition(angle, radius);
             var rotation = new Angle(-angle);
 
+            // Creates layers
             _sprite.LayerMapReserve((uid, sprite), baseLayer);
             _sprite.LayerMapReserve((uid, sprite), layerOne);
             _sprite.LayerMapReserve((uid, sprite), layerTwo);
 
             if (flipped)
             {
+                // Creates card and moves
                 BuildCard(prototype, baseLayer, card.BaseState, layerOne, layerTwo, (uid, sprite));
                 TransformLayer(layerOne, position, rotation, (uid, sprite));
                 TransformLayer(layerTwo, position, rotation, (uid, sprite));
             }
             else
+            {
+                // Uses the base layer for the back side
                 BuildLayer(baseLayer, card.CardBack, null, (uid, sprite));
+                _sprite.LayerSetVisible((uid, sprite), layerOne, false);
+                _sprite.LayerSetVisible((uid, sprite), layerTwo, false);
+            }
 
             TransformLayer(baseLayer, position, rotation, (uid, sprite));
 
@@ -211,7 +232,7 @@ public sealed partial class CardSystem : SharedCardSystem
         Entity<SpriteComponent?> sprite
     )
     {
-        BuildLayer(baseLayer, baseSprite, null, sprite);
+        BuildLayer(baseLayer, prototype.LayerBaseState ?? baseSprite, prototype.LayerBaseColor, sprite);
         BuildLayer(layerOne, prototype.LayerOneState, prototype.LayerOneColor, sprite);
         BuildLayer(layerTwo, prototype.LayerTwoState, prototype.LayerTwoColor, sprite);
     }

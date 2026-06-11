@@ -9,6 +9,7 @@ using Content.Shared.Verbs;
 using Robust.Shared.Audio.Systems;
 using Robust.Shared.Containers;
 using Robust.Shared.Map;
+using Robust.Shared.Prototypes;
 using Robust.Shared.Timing;
 
 namespace Content.Shared.Cards;
@@ -39,6 +40,9 @@ public abstract partial class SharedCardSystem : EntitySystem
     [Dependency]
     protected SharedTransformSystem TransformSystem = default!;
 
+    [Dependency]
+    protected IPrototypeManager PrototypeManager = default!;
+
     public override void Initialize()
     {
         base.Initialize();
@@ -58,18 +62,23 @@ public abstract partial class SharedCardSystem : EntitySystem
 
     private void OnCardsInit(Entity<CardsComponent> ent, ref ComponentInit args)
     {
-        ent.Comp.Cards = ent
-            .Comp._cards.Select(protoId => new CardData(protoId, ent.Comp.BaseState, ent.Comp.CardBack))
-            .ToList();
+        if (ent.Comp.Cards.Count == 0)
+        {
+            ent.Comp.Cards = ent
+                .Comp._cards.Select(protoId => new CardData(protoId, ent.Comp.BaseState, ent.Comp.CardBack))
+                .ToList();
+        }
     }
 
     private void OnMergeEvent(Entity<CardsComponent> ent, ref MergeEvent args)
     {
+        // If BeingCherryPicked the merging is sorted elsewhere
         if (ent.Comp.BeingCherryPicked)
             return;
         if (!TryComp<CardsComponent>(args.Mergee, out var mergeeComp))
             return;
 
+        // Animation must be before cards move
         PlayCardDrawAnimation(ent, (args.Mergee, mergeeComp), args.Delta);
         TakeFromDeck(ent.Comp, mergeeComp, args.Delta);
         UpdateVisualState(ent);
@@ -90,6 +99,9 @@ public abstract partial class SharedCardSystem : EntitySystem
             return;
 
         var delta = splitStackComp.Count;
+        // playOnUser allows the server to give the animation to the client
+        // If using a not predicted system this is true
+        // When a card is thrown it must be false though
         PlayCardDrawAnimation(
             (args.NewId, splitComp),
             ent,
@@ -97,6 +109,7 @@ public abstract partial class SharedCardSystem : EntitySystem
             playOnUser: Hands.GetActiveItem(Transform(ent.Owner).ParentUid) != ent.Owner
         );
         TakeFromDeck(splitComp, ent.Comp, delta);
+        // Copy state over to new entity
         splitComp.Flipped = ent.Comp.Flipped;
         splitComp.Fanned = ent.Comp.Fanned;
 
@@ -109,19 +122,24 @@ public abstract partial class SharedCardSystem : EntitySystem
 
     private void OnCardsContainerInserted(Entity<CardsComponent> ent, ref EntGotInsertedIntoContainerMessage args)
     {
+        // Unfans cards put inside containers except hands
         if (ent.Comp.Fanned && !Hands.EnumerateHands(args.Container.Owner).Contains(args.Container.ID))
             TryFanCards(ent);
     }
 
     private void TakeFromDeck(CardsComponent comp1, CardsComponent comp2, int delta)
     {
+        // Takes cards from the top or bottom of deck depending on how it is flipped
         var selected = MovedCards(comp2, delta);
         MoveCards(comp1, comp2, selected);
     }
 
     private void MoveCards(CardsComponent comp1, CardsComponent comp2, List<CardData> selected)
     {
+        // Remove cards from source
         selected.ForEach(item => comp2.Cards.Remove(item));
+        // Add cards to sink
+        // The cards will be added to the side which is "facing upwards"
         if (comp1.Flipped)
             comp1.Cards = comp1.Cards.Concat(selected).ToList();
         else
@@ -130,6 +148,8 @@ public abstract partial class SharedCardSystem : EntitySystem
 
     private List<CardData> MovedCards(CardsComponent comp, int delta)
     {
+        // Takes some number of cards from the top of the deck
+        // Takes from the bottom if the deck is flipped
         if (comp.Flipped)
             return comp.Cards.TakeLast(delta).ToList();
         return comp.Cards.Take(delta).ToList();
@@ -137,6 +157,9 @@ public abstract partial class SharedCardSystem : EntitySystem
 
     public bool TryShuffleCards(Entity<CardsComponent> cards)
     {
+        // Shuffles cards
+        // Currently mis-predicted
+        // TODO: FIX this mis-predict and replace with a proper animation
         cards.Comp.Cards = cards.Comp.Cards.Shuffle().ToList();
         UpdateVisualState(cards);
         Audio.PlayPredicted(cards.Comp.ShuffleSound, cards, null);
@@ -156,6 +179,7 @@ public abstract partial class SharedCardSystem : EntitySystem
     {
         cards.Comp.Fanned = !cards.Comp.Fanned;
         UpdateVisualState(cards);
+        // Stack count updated so the deck below the fan shows the correct number of cards
         UpdateStackCount(cards);
         Dirty(cards.Owner, cards.Comp);
         return true;
@@ -174,8 +198,10 @@ public abstract partial class SharedCardSystem : EntitySystem
         if (!Resolve(user.Owner, ref user.Comp, false) || !TryComp<StackComponent>(cards.Owner, out var stackComp))
             return false;
 
+        // Card movement needs to be a specific card so this prevents the merge or split event from taking from top of deck
         cards.Comp.BeingCherryPicked = true;
 
+        // This section is effectively SharedStackSystem.UserSplit()
         if (
             Hands.TryGetActiveItem(user.Owner, out var recipient)
             && TryComp<StackComponent>(recipient, out var recipientStack)
@@ -193,17 +219,19 @@ public abstract partial class SharedCardSystem : EntitySystem
             return false;
         }
 
+        cards.Comp.BeingCherryPicked = false;
+
         if (!TryComp<CardsComponent>(split, out var newCardsComp))
         {
-            cards.Comp.BeingCherryPicked = false;
             return false;
         }
 
-        cards.Comp.BeingCherryPicked = false;
-
+        // Animation must be before cards are moved
         PlayCardTakeAnimation((split.Value, newCardsComp), cards, cardInx);
         MoveCards(newCardsComp, cards.Comp, new List<CardData> { cards.Comp.Cards[cardInx] });
 
+        // If this is true it is a new deck so copies over the properties
+        // Otherwise it doesn't change the deck the card joins
         if (newCardsComp.Cards.Count == 1)
         {
             newCardsComp.Flipped = cards.Comp.Flipped;

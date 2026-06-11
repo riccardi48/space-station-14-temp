@@ -9,6 +9,7 @@ namespace Content.Shared.Cards;
 
 public abstract partial class SharedCardSystem
 {
+    // When 'E' pressed in the world
     private void OnCardsActivate(Entity<CardsComponent> ent, ref ActivateInWorldEvent args)
     {
         if (args.Handled || !args.Complex)
@@ -18,6 +19,8 @@ public abstract partial class SharedCardSystem
         TryFlipCards(ent);
     }
 
+    // When 'Z' pressed in hands
+    // Will flip then fan then flip and fan
     private void OnCardsUse(Entity<CardsComponent> ent, ref UseInHandEvent args)
     {
         if (args.Handled)
@@ -65,6 +68,8 @@ public abstract partial class SharedCardSystem
             }
         );
 
+        // If the cards are in the current hand don't allow player to take from deck
+        // Maybe bad?
         if (
             !Container.TryGetContainingContainer(ent.Owner, out var container)
             || Hands.EnumerateHands(container.Owner).Contains(container.ID)
@@ -80,6 +85,8 @@ public abstract partial class SharedCardSystem
             );
         }
 
+        // If deck is flipped, take a specific card from the deck
+        // Otherwise take a random card from the deck
         if (ent.Comp.Fanned && Hands.GetActiveItem(user) != ent.Owner)
         {
             var priority = -200;

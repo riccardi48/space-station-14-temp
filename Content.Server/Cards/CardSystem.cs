@@ -48,6 +48,8 @@ public sealed partial class CardSystem : SharedCardSystem
             stackId,
             selected
         );
+        // Don't for the client which is running it as they can have their own predicted animation
+        // Do play it for systems which are not predicted i.e. splitting stacks
         var filter = Filter
             .Pvs(mergerCoords)
             .RemoveWhereAttachedEntity(e => !playOnUser && (e == mergerCoords.EntityId || e == mergeeCoords.EntityId));
