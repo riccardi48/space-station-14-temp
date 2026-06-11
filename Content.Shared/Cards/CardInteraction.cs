@@ -33,7 +33,7 @@ public abstract partial class SharedCardSystem
             TryFanCards(ent);
             TryFlipCards(ent);
         }
-        else if (ent.Comp.Flipped)
+        else if (ent.Comp.Flipped && ent.Comp.Cards.Count != 1)
         {
             TryFanCards(ent);
         }

@@ -51,7 +51,8 @@ public sealed partial class CardSystem : SharedCardSystem
             .FirstOrDefault(e => e != ent.Owner && TryComp<CardsComponent>(e, out _));
 
         if (
-            !TryComp<CardsComponent>(uid, out _)
+            !TryComp<CardsComponent>(uid, out var recipientCardsComp)
+            || ent.Comp.Flipped != recipientCardsComp.Flipped
             || !TryComp<StackComponent>(ent.Owner, out var donorStack)
             || !TryComp<StackComponent>(uid, out var recipientStack)
             || !Stacks.TryMergeStacks((ent.Owner, donorStack), (uid, recipientStack), out _)

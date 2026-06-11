@@ -144,6 +144,8 @@ public abstract partial class SharedCardSystem : EntitySystem
             comp1.Cards = comp1.Cards.Concat(selected).ToList();
         else
             comp1.Cards = selected.Concat(comp1.Cards).ToList();
+        if (comp2.Cards.Count == 1)
+            comp2.Fanned = false;
     }
 
     private List<CardData> MovedCards(CardsComponent comp, int delta)
