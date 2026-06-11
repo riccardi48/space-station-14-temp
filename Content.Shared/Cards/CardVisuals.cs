@@ -1,9 +1,11 @@
 using System.Linq;
 using Content.Shared.Examine;
 using Content.Shared.Stacks;
+using Content.Shared.Verbs;
 using Robust.Shared.Map;
 using Robust.Shared.Prototypes;
 using Robust.Shared.Serialization;
+using Robust.Shared.Utility;
 
 namespace Content.Shared.Cards;
 
@@ -27,6 +29,29 @@ public abstract partial class SharedCardSystem
             Loc.GetString("comp-cards-examine-detail", ("card", Loc.GetString(cardName.Replace('_', '-'))))
         );
     }
+
+    /// <summary>
+    ///     Full reagent scan, such as with chemical analysis goggles.
+    /// </summary>
+    private void OnCardsExaminableVerb(Entity<CardsComponent> cards, ref GetVerbsEvent<ExamineVerb> args)
+    {
+        if (!args.CanInteract || !args.CanAccess)
+            return;
+
+        var target = args.Target;
+        var user = args.User;
+        var verb = new ExamineVerb()
+        {
+            Act = () => OpenInspectUI(user, cards),
+            Text = "Inspect",
+            Message = "Inspect",
+            Category = VerbCategory.Examine,
+            Icon = new SpriteSpecifier.Texture(new("/Textures/Interface/VerbIcons/examine.svg.192dpi.png")),
+        };
+        args.Verbs.Add(verb);
+    }
+
+    protected abstract void OpenInspectUI(EntityUid player, Entity<CardsComponent> cards);
 
     private void OnStackCountChanged(Entity<CardsComponent> ent, ref StackCountChangedEvent args)
     {

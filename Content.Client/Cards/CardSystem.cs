@@ -1,5 +1,6 @@
 using System.Linq;
 using System.Numerics;
+using Content.Client.Examine;
 using Content.Client.Gameplay;
 using Content.Shared.Cards;
 using Content.Shared.Interaction.Events;
@@ -8,9 +9,12 @@ using Content.Shared.Storage.EntitySystems;
 using JetBrains.Annotations;
 using Robust.Client.GameObjects;
 using Robust.Client.Graphics;
+using Robust.Client.ResourceManagement;
 using Robust.Client.State;
+using Robust.Client.UserInterface.Controls;
 using Robust.Shared.Map;
 using Robust.Shared.Prototypes;
+using Robust.Shared.Utility;
 using DrawDepth = Content.Shared.DrawDepth.DrawDepth;
 
 namespace Content.Client.Cards;
@@ -30,6 +34,10 @@ public sealed partial class CardSystem : SharedCardSystem
 
     [Dependency]
     private IStateManager _stateManager = default!;
+
+    [Dependency]
+    private ExamineSystem _examineSystem = default!;
+    private const string RsiPath = "/Textures/Objects/Fun/PlayingCards/nanotrasenbasiccards.rsi";
 
     public override void Initialize()
     {

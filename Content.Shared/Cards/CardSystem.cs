@@ -42,6 +42,8 @@ public abstract partial class SharedCardSystem : EntitySystem
 
     [Dependency]
     protected IPrototypeManager PrototypeManager = default!;
+    [Dependency]
+    private ExamineSystemShared _examineSystem = default!;
 
     public override void Initialize()
     {
@@ -53,6 +55,7 @@ public abstract partial class SharedCardSystem : EntitySystem
 
         SubscribeLocalEvent<CardsComponent, ComponentStartup>(OnCardsStarted);
         SubscribeLocalEvent<CardsComponent, ExaminedEvent>(OnCardsExamined);
+        SubscribeLocalEvent<CardsComponent, GetVerbsEvent<ExamineVerb>>(OnCardsExaminableVerb);
         SubscribeLocalEvent<CardsComponent, StackCountChangedEvent>(OnStackCountChanged);
 
         SubscribeLocalEvent<CardsComponent, ActivateInWorldEvent>(OnCardsActivate);

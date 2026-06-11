@@ -18,6 +18,8 @@ public sealed partial class CardSystem : SharedCardSystem
         SubscribeNetworkEvent<CardDropMergeEvent>(HandleDropMerge);
     }
 
+    protected override void OpenInspectUI(EntityUid player, Entity<CardsComponent> cards) { }
+
     private void HandleDropMerge(CardDropMergeEvent args)
     {
         var mergee = GetEntity(args.Mergee);
