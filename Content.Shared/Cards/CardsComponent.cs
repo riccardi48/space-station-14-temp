@@ -8,14 +8,9 @@ namespace Content.Shared.Cards;
 [RegisterComponent, NetworkedComponent, AutoGenerateComponentState(true)]
 public sealed partial class CardsComponent : Component
 {
-    // Cards imported from the prototype
-    // Do not use after initial spawning
-    [DataField("cards", required: true)]
-    public List<ProtoId<CardPrototype>> _cards { get; set; }
-
     // List of current cards in the deck
-    [ViewVariables, AutoNetworkedField]
-    public List<CardData> Cards { get; set; } = new();
+    [DataField(customTypeSerializer: typeof(CardDataSerializer)), AutoNetworkedField]
+    public List<CardData> Cards;
 
     // Number of current cards in the deck
     [ViewVariables]

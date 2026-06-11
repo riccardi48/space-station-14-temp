@@ -62,11 +62,12 @@ public abstract partial class SharedCardSystem : EntitySystem
 
     private void OnCardsInit(Entity<CardsComponent> ent, ref ComponentInit args)
     {
-        if (ent.Comp.Cards.Count == 0)
+        for (var i = 0; i < ent.Comp.Cards.Count; i++)
         {
-            ent.Comp.Cards = ent
-                .Comp._cards.Select(protoId => new CardData(protoId, ent.Comp.BaseState, ent.Comp.CardBack))
-                .ToList();
+            var card = ent.Comp.Cards[i];
+            card.BaseState = card.BaseState == string.Empty ? ent.Comp.BaseState : card.BaseState;
+            card.CardBack = card.CardBack == string.Empty ? ent.Comp.CardBack : card.CardBack;
+            ent.Comp.Cards[i] = card;
         }
     }
 
