@@ -6,10 +6,10 @@ using Robust.Client.UserInterface.Controls;
 using Robust.Client.UserInterface.XAML;
 
 namespace Content.Client.Cards;
+
 [GenerateTypedNameReferences]
 public sealed partial class CardInspect : BoxContainer
 {
-    public CardListVisualState? VisualState { get; set; }
     public CardInspect()
     {
         RobustXamlLoader.Load(this);

@@ -81,7 +81,7 @@ public abstract partial class SharedCardSystem
         }
     }
 
-    protected CardListVisualState GetCardListVisualState(CardsComponent cards)
+    public CardListVisualState GetCardListVisualState(CardsComponent cards)
     {
         // This gets the cards the player could see
         // This function controls a lot of the client side sprite
