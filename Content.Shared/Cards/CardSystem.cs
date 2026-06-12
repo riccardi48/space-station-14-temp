@@ -65,11 +65,12 @@ public abstract partial class SharedCardSystem : EntitySystem
 
     private void OnCardsInit(Entity<CardsComponent> ent, ref ComponentInit args)
     {
-        if (ent.Comp.Cards.Count == 0)
+        for (var i = 0; i < ent.Comp.Cards.Count; i++)
         {
-            ent.Comp.Cards = ent
-                .Comp._cards.Select(protoId => new CardData(protoId, ent.Comp.BaseState, ent.Comp.CardBack))
-                .ToList();
+            var card = ent.Comp.Cards[i];
+            card.BaseState = card.BaseState == string.Empty ? ent.Comp.BaseState : card.BaseState;
+            card.CardBack = card.CardBack == string.Empty ? ent.Comp.CardBack : card.CardBack;
+            ent.Comp.Cards[i] = card;
         }
     }
 
@@ -140,13 +141,15 @@ public abstract partial class SharedCardSystem : EntitySystem
     private void MoveCards(CardsComponent comp1, CardsComponent comp2, List<CardData> selected)
     {
         // Remove cards from source
-        selected.ForEach(item => comp2.Cards.Remove(item));
+        foreach (var item in selected)
+            comp2.Cards.Remove(item);
         // Add cards to sink
         // The cards will be added to the side which is "facing upwards"
         if (comp1.Flipped)
-            comp1.Cards = comp1.Cards.Concat(selected).ToList();
+            comp1.Cards.AddRange(selected);
         else
-            comp1.Cards = selected.Concat(comp1.Cards).ToList();
+            comp1.Cards.InsertRange(0, selected);
+
         if (comp2.Cards.Count == 1)
             comp2.Fanned = false;
     }
