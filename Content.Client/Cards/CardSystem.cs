@@ -178,12 +178,12 @@ public sealed partial class CardSystem : SharedCardSystem
         // Card visuals state will only have one card in it if not fanned
         // It will have a max of MaxFanned when fanned
         if (!Appearance.TryGetData<CardListVisualState>(uid, CardVisuals.CardList, out var visualState, args.Component))
-            visualState = new CardListVisualState(new List<CardData>());
+            visualState = new CardListVisualState(new List<CardData>(), 0, 0);
 
         if (!TryComp<SpriteComponent>(uid, out var sprite) || !TryComp<CardsComponent>(uid, out var cards))
             return;
 
-        var count = visualState.CardList.Count;
+        var count = visualState.Count;
         var radius = FanRadius(count);
 
         // Delete all layers which are not used here
@@ -201,7 +201,7 @@ public sealed partial class CardSystem : SharedCardSystem
 
         for (var i = 0; i < count; i++)
         {
-            var card = visualState.CardList[i];
+            var card = visualState.CardList[visualState.Start + i];
             var (baseLayer, layerOne, layerTwo) = CardLayers(i);
 
             if (!_prototypeManager.TryIndex<CardPrototype>(card.CardId, out var prototype))

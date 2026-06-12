@@ -61,9 +61,9 @@ public abstract partial class SharedCardSystem
         // This gets the cards the player could see
         // This function controls a lot of the client side sprite
         // Very important this is correct
-        var count = cards.Fanned ? cards.MaxFanned : 1;
-        var selected = cards.Flipped ? cards.Cards.TakeLast(count) : cards.Cards.Take(count);
-        return new CardListVisualState(selected.ToList());
+        var count = Math.Min(cards.Fanned ? cards.MaxFanned : 1, cards.Cards.Count);
+        var start = cards.Flipped ? cards.Cards.Count - count : 0;
+        return new CardListVisualState(cards.Cards, start, count);
     }
 
     protected void PlayCardDrawAnimation(
@@ -135,13 +135,17 @@ public enum CardVisuals : byte
 public sealed class CardListVisualState : ICloneable
 {
     public readonly List<CardData> CardList;
+    public readonly int Start;
+    public readonly int Count;
 
-    public CardListVisualState(List<CardData> cardList)
+    public CardListVisualState(List<CardData> cardList, int start, int count)
     {
         CardList = cardList;
+        Start = start;
+        Count = count;
     }
 
-    public object Clone() => new CardListVisualState(CardList);
+    public object Clone() => new CardListVisualState(CardList, Start, Count);
 }
 
 [Serializable, NetSerializable]
