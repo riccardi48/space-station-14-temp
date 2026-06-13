@@ -9,6 +9,12 @@ namespace Content.Shared.Cards;
 
 public abstract partial class SharedCardSystem
 {
+    private void InitializeVisuals()
+    {
+        SubscribeLocalEvent<CardsComponent, ComponentStartup>(OnCardsStarted);
+        SubscribeLocalEvent<CardsComponent, ExaminedEvent>(OnCardsExamined);
+        SubscribeLocalEvent<CardsComponent, StackCountChangedEvent>(OnStackCountChanged);
+    }
     private void OnCardsStarted(Entity<CardsComponent> ent, ref ComponentStartup args)
     {
         UpdateVisualState(ent);

@@ -2,13 +2,18 @@ using System.Linq;
 using Content.Shared.Interaction;
 using Content.Shared.Interaction.Events;
 using Content.Shared.Random.Helpers;
-using Content.Shared.Stacks;
 using Content.Shared.Verbs;
 
 namespace Content.Shared.Cards;
 
 public abstract partial class SharedCardSystem
 {
+    private void InitializeInteraction()
+    {
+        SubscribeLocalEvent<CardsComponent, ActivateInWorldEvent>(OnCardsActivate);
+        SubscribeLocalEvent<CardsComponent, UseInHandEvent>(OnCardsUse);
+        SubscribeLocalEvent<CardsComponent, GetVerbsEvent<AlternativeVerb>>(OnCardsAlternativeInteract);
+    }
     // When 'E' pressed in the world
     private void OnCardsActivate(Entity<CardsComponent> ent, ref ActivateInWorldEvent args)
     {

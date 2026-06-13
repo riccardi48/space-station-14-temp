@@ -1,14 +1,9 @@
 using System.Linq;
-using Content.Shared.Examine;
 using Content.Shared.Hands.EntitySystems;
-using Content.Shared.Interaction;
-using Content.Shared.Interaction.Events;
 using Content.Shared.Popups;
 using Content.Shared.Stacks;
-using Content.Shared.Verbs;
 using Robust.Shared.Audio.Systems;
 using Robust.Shared.Containers;
-using Robust.Shared.Map;
 using Robust.Shared.Prototypes;
 using Robust.Shared.Timing;
 
@@ -50,14 +45,8 @@ public abstract partial class SharedCardSystem : EntitySystem
         SubscribeLocalEvent<CardsComponent, MergeEvent>(OnMergeEvent);
         SubscribeLocalEvent<CardsComponent, StackSplitEvent>(OnSplitEvent);
         SubscribeLocalEvent<CardsComponent, EntGotInsertedIntoContainerMessage>(OnCardsContainerInserted);
-
-        SubscribeLocalEvent<CardsComponent, ComponentStartup>(OnCardsStarted);
-        SubscribeLocalEvent<CardsComponent, ExaminedEvent>(OnCardsExamined);
-        SubscribeLocalEvent<CardsComponent, StackCountChangedEvent>(OnStackCountChanged);
-
-        SubscribeLocalEvent<CardsComponent, ActivateInWorldEvent>(OnCardsActivate);
-        SubscribeLocalEvent<CardsComponent, UseInHandEvent>(OnCardsUse);
-        SubscribeLocalEvent<CardsComponent, GetVerbsEvent<AlternativeVerb>>(OnCardsAlternativeInteract);
+        InitializeVisuals();
+        InitializeInteraction();
     }
 
     private void OnCardsInit(Entity<CardsComponent> ent, ref ComponentInit args)
