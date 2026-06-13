@@ -145,11 +145,11 @@ public sealed partial class CardSystem : SharedCardSystem
 
     // Position of cards in fan
     // Semi-circle shifted down to centre it
-    private static Vector2 FanPosition(double angle, float radius) =>
+    public static Vector2 FanPosition(double angle, float radius) =>
         new((float)Math.Sin(angle) * radius, (float)Math.Cos(angle) * radius - radius * (3f / 4f));
 
     // Radius is 0 when one card so individual cards can't be fanned
-    private static float FanRadius(int count) => count <= 1 ? 0f : (float)Math.Sqrt(count / 20f);
+    public static float FanRadius(int count) => count <= 1 ? 0f : (float)Math.Sqrt(count / 20f);
 
     public static (Vector2, Angle) GetCardPosRot(int inx, int count)
     {

@@ -50,25 +50,23 @@ public abstract partial class SharedCardSystem : EntitySystem
         InitializeInteraction();
     }
 
-    private void OnCardsInit(Entity<CardsComponent> ent, ref ComponentInit args)
+    protected virtual void OnCardsInit(Entity<CardsComponent> ent, ref ComponentInit args)
     {
         for (var i = 0; i < ent.Comp.Cards.Count; i++)
         {
             var card = ent.Comp.Cards[i];
             card.BaseState = card.BaseState == string.Empty ? ent.Comp.BaseState : card.BaseState;
             card.CardBack = card.CardBack == string.Empty ? ent.Comp.CardBack : card.CardBack;
-            card.CardInx = _inxCounter;
-            _inxCounter++;
             ent.Comp.Cards[i] = card;
         }
     }
 
     private void OnMergeEvent(Entity<CardsComponent> ent, ref MergeEvent args)
     {
-        // If BeingCherryPicked the merging is sorted elsewhere
-        if (ent.Comp.BeingCherryPicked)
-            return;
         if (!TryComp<CardsComponent>(args.Mergee, out var mergeeComp))
+            return;
+        // If BeingCherryPicked the merging is sorted elsewhere
+        if (ent.Comp.BeingCherryPicked || mergeeComp.BeingCherryPicked)
             return;
 
         // Animation must be before cards move
@@ -200,22 +198,18 @@ public abstract partial class SharedCardSystem : EntitySystem
 
         // This section is effectively SharedStackSystem.UserSplit()
         if (
-            Hands.TryGetActiveItem(user.Owner, out var recipient)
-            && TryComp<StackComponent>(recipient, out var recipientStack)
-            && Stacks.TryMergeStacks((cards.Owner, stackComp), (recipient.Value, recipientStack), out _, amount: 1)
+            !Hands.TryGetActiveItem(user.Owner, out split)
+            || !TryComp<StackComponent>(split, out var recipientStack)
+            || !Stacks.TryMergeStacks((cards.Owner, stackComp), (split.Value, recipientStack), out _, amount: 1)
         )
         {
-            cards.Comp.BeingCherryPicked = false;
-            return false;
+            split = Stacks.Split((cards.Owner, stackComp), 1, user.Comp.Coordinates);
+            if (split == null)
+            {
+                cards.Comp.BeingCherryPicked = false;
+                return false;
+            }
         }
-
-        split = Stacks.Split((cards.Owner, stackComp), 1, user.Comp.Coordinates);
-        if (split == null)
-        {
-            cards.Comp.BeingCherryPicked = false;
-            return false;
-        }
-
         cards.Comp.BeingCherryPicked = false;
 
         if (!TryComp<CardsComponent>(split, out var newCardsComp))
@@ -234,9 +228,9 @@ public abstract partial class SharedCardSystem : EntitySystem
         {
             newCardsComp.Flipped = cards.Comp.Flipped;
             newCardsComp.Fanned = cards.Comp.Fanned;
+            Hands.PickupOrDrop(user.Owner, split.Value);
         }
 
-        Hands.PickupOrDrop(user.Owner, split.Value);
         Popup.PopupCursor(Loc.GetString("comp-stack-split"), user.Owner);
 
         UpdateVisualState(cards);

@@ -133,9 +133,14 @@ public abstract partial class SharedCardSystem
         out AlternativeVerb verb
     )
     {
+        verb = null!;
         if (!ent.Comp.Fanned && !ent.Comp.Flipped)
         {
-            verb = null!;
+            return false;
+        }
+
+        if (!ent.Comp.Fanned && !ent.Comp.Flipped)
+        {
             return false;
         }
         var card = GetCardFromInx(ent.Comp.Cards, cardInx);

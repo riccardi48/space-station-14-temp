@@ -26,7 +26,7 @@ public partial struct CardData
     /// </summary>
     [DataField, AutoNetworkedField]
     public string CardBack = string.Empty;
-    [AutoNetworkedField]
+    [DataField, AutoNetworkedField]
     public int CardInx;
 
     public CardData(ProtoId<CardPrototype> cardId)
