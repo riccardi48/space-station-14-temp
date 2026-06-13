@@ -1,0 +1,62 @@
+using Content.Shared.Stacks;
+using Robust.Shared.Map;
+using Robust.Shared.Prototypes;
+using Robust.Shared.Serialization;
+
+namespace Content.Shared.Cards;
+
+[Serializable, NetSerializable]
+public sealed class CardAnimationEvent : EntityEventArgs
+{
+    public readonly NetCoordinates MergerCoords;
+    public readonly bool MergeeFlipped;
+    public readonly NetCoordinates MergeeCoords;
+    public readonly Angle MergeeRotation;
+    public readonly ProtoId<StackPrototype> StackId;
+    public readonly List<CardData> Selected;
+
+    public CardAnimationEvent(
+        NetCoordinates mergerCoords,
+        bool mergeeFlipped,
+        NetCoordinates mergeeCoords,
+        Angle mergeeRotation,
+        ProtoId<StackPrototype> stackId,
+        List<CardData> selected
+    )
+    {
+        MergerCoords = mergerCoords;
+        MergeeFlipped = mergeeFlipped;
+        MergeeCoords = mergeeCoords;
+        MergeeRotation = mergeeRotation;
+        StackId = stackId;
+        Selected = selected;
+    }
+}
+
+[Serializable, NetSerializable]
+public sealed class CardDropMergeEvent : EntityEventArgs
+{
+    public readonly NetEntity Mergee;
+    public readonly NetEntity Merger;
+
+    public CardDropMergeEvent(NetEntity merger, NetEntity mergee)
+    {
+        Mergee = mergee;
+        Merger = merger;
+    }
+}
+
+[Serializable, NetSerializable]
+public sealed class CardTryTakeEvent : EntityEventArgs
+{
+    public readonly NetEntity Cards;
+    public readonly NetEntity User;
+    public readonly int CardInx;
+
+    public CardTryTakeEvent(NetEntity cards, NetEntity user, int cardInx)
+    {
+        Cards = cards;
+        User = user;
+        CardInx = cardInx;
+    }
+}

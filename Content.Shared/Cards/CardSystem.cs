@@ -8,7 +8,6 @@ using Content.Shared.Stacks;
 using Content.Shared.Verbs;
 using Robust.Shared.Audio.Systems;
 using Robust.Shared.Containers;
-using Robust.Shared.Map;
 using Robust.Shared.Prototypes;
 using Robust.Shared.Timing;
 
@@ -61,6 +60,8 @@ public abstract partial class SharedCardSystem : EntitySystem
         SubscribeLocalEvent<CardsComponent, ActivateInWorldEvent>(OnCardsActivate);
         SubscribeLocalEvent<CardsComponent, UseInHandEvent>(OnCardsUse);
         SubscribeLocalEvent<CardsComponent, GetVerbsEvent<AlternativeVerb>>(OnCardsAlternativeInteract);
+
+        SubscribeNetworkEvent<CardTryTakeEvent>(HandleCardTake);
     }
 
     private void OnCardsInit(Entity<CardsComponent> ent, ref ComponentInit args)

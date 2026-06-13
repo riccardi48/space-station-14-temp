@@ -147,6 +147,15 @@ public abstract partial class SharedCardSystem
         List<CardData> selected,
         bool playOnUser = false
     );
+
+    private void HandleCardTake(CardTryTakeEvent args)
+    {
+        var ent = GetEntity(args.Cards);
+        var user = GetEntity(args.User);
+
+        if (TryComp<CardsComponent>(ent, out var cardComp) && TryComp<TransformComponent>(user, out var transComp))
+            TryTakeCard((ent, cardComp), (user, transComp), args.CardInx, out _);
+    }
 }
 
 [Serializable, NetSerializable]
@@ -171,45 +180,4 @@ public sealed class CardListVisualState : ICloneable
     }
 
     public object Clone() => new CardListVisualState(CardList, Start, Count);
-}
-
-[Serializable, NetSerializable]
-public sealed class CardAnimationEvent : EntityEventArgs
-{
-    public readonly NetCoordinates MergerCoords;
-    public readonly bool MergeeFlipped;
-    public readonly NetCoordinates MergeeCoords;
-    public readonly Angle MergeeRotation;
-    public readonly ProtoId<StackPrototype> StackId;
-    public readonly List<CardData> Selected;
-
-    public CardAnimationEvent(
-        NetCoordinates mergerCoords,
-        bool mergeeFlipped,
-        NetCoordinates mergeeCoords,
-        Angle mergeeRotation,
-        ProtoId<StackPrototype> stackId,
-        List<CardData> selected
-    )
-    {
-        MergerCoords = mergerCoords;
-        MergeeFlipped = mergeeFlipped;
-        MergeeCoords = mergeeCoords;
-        MergeeRotation = mergeeRotation;
-        StackId = stackId;
-        Selected = selected;
-    }
-}
-
-[Serializable, NetSerializable]
-public sealed class CardDropMergeEvent : EntityEventArgs
-{
-    public readonly NetEntity Mergee;
-    public readonly NetEntity Merger;
-
-    public CardDropMergeEvent(NetEntity merger, NetEntity mergee)
-    {
-        Mergee = mergee;
-        Merger = merger;
-    }
 }

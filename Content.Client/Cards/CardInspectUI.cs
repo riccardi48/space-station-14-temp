@@ -74,13 +74,13 @@ public sealed partial class CardSystem
     public sealed class CardSpriteView : SpriteView
     {
         private readonly LayoutContainer _buttonOverlay;
+        private readonly ISharedPlayerManager _playerManager;
+        private readonly float _pixelsPerMeter;
 
-        private Entity<CardsComponent?> _cards;
+        private Entity<CardsComponent>? _cards;
         private float _cardWidth;
         private float _cardHeight;
-        private ISharedPlayerManager _playerManager;
         private Action<(Entity<CardsComponent> cards, EntityUid user, int cardInx)>? _onCardClicked;
-
         private Func<CardsComponent, CardListVisualState>? _getVisualState;
 
         private CardListVisualState VisualState
@@ -89,13 +89,8 @@ public sealed partial class CardSystem
             {
                 if (_cards == null || _getVisualState == null)
                     return new CardListVisualState(new List<CardData>(), 0, 0);
-                return _getVisualState(_cards);
+                return _getVisualState(_cards.Value.Comp);
             }
-        }
-
-        public void SetVisualStateFunc(Func<CardsComponent, CardListVisualState> getVisualState)
-        {
-            _getVisualState = getVisualState;
         }
 
         public CardSpriteView(ISharedPlayerManager playerManager)
@@ -111,6 +106,11 @@ public sealed partial class CardSystem
             AddChild(_buttonOverlay);
         }
 
+        public void SetVisualStateFunc(Func<CardsComponent, CardListVisualState> getVisualState)
+        {
+            _getVisualState = getVisualState;
+        }
+
         public void SetCards(
             Entity<CardsComponent> cards,
             float cardWidth,
@@ -118,7 +118,7 @@ public sealed partial class CardSystem
             Action<(Entity<CardsComponent> cards, EntityUid user, int cardInx)>? onCardClicked
         )
         {
-            _cards = cards.Comp;
+            _cards = cards;
             _cardWidth = cardWidth;
             _cardHeight = cardHeight;
             _onCardClicked = onCardClicked;
@@ -127,7 +127,7 @@ public sealed partial class CardSystem
 
         public void UpdateCards(Entity<CardsComponent> cards)
         {
-            _cards = cards.Comp;
+            _cards = cards;
             RebuildButtons();
         }
 
@@ -154,9 +154,13 @@ public sealed partial class CardSystem
             if (count == 0)
                 return;
 
+            var user = _playerManager.LocalSession?.AttachedEntity;
+            if (user == null)
+                return;
+
             var center = new Vector2(Size.X / 2f, Size.Y / 2f);
             var spriteScale = GetSpriteToUIScale();
-            var scale = Scale.X;
+            var buttonScale = Scale.X;
             var radius = CardSystem.FanRadius(count);
 
             for (var i = 0; i < count; i++)
@@ -166,19 +170,16 @@ public sealed partial class CardSystem
                 offset.Y *= -1;
                 rotation *= -1;
 
-                var button = new CardHoverButton(rotation, _cardWidth * scale, _cardHeight * scale);
-                var user = _playerManager.LocalSession?.AttachedEntity;
-                if (user == null)
-                    continue;
-                button.OnPressed += _ => _onCardClicked?.Invoke((_cards, user.Value, visualState.Start + i));
+                var button = new CardHoverButton(rotation, _cardWidth * buttonScale, _cardHeight * buttonScale);
+                var cardInx = visualState.Start + i;
+                button.OnPressed += _ => _onCardClicked?.Invoke((_cards!.Value, user.Value, cardInx));
 
                 var screenPos = center + offset * spriteScale;
-                _buttonOverlay.AddChild(button);
-                Log.Info($"{screenPos.X} {screenPos.Y}");
                 LayoutContainer.SetPosition(
                     button,
                     screenPos - new Vector2(button.SetSize.X / 2f, button.SetSize.Y / 2f)
                 );
+                _buttonOverlay.AddChild(button);
             }
         }
     }

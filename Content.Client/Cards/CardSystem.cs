@@ -55,7 +55,7 @@ public sealed partial class CardSystem : SharedCardSystem
         SubscribeLocalEvent<CardsComponent, DroppedEvent>(OnCardsDropped);
         OnCardButtonClicked += args =>
         {
-            TryTakeCard(args.cards, args.user, args.cardInx, out _);
+            RaisePredictiveEvent(new CardTryTakeEvent(GetNetEntity(args.cards), GetNetEntity(args.user), args.cardInx));
         };
     }
 
