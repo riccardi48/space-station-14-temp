@@ -65,13 +65,10 @@ public abstract partial class SharedCardSystem
         if (TryGetFanCardVerb(ent, user, out var fanVerb))
             args.Verbs.Add(fanVerb);
 
-        if (!ent.Comp.Fanned || Hands.GetActiveItem(user) == ent.Owner)
-            return;
-
         var priority = -200;
         if (ent.Comp.Flipped)
         {
-            foreach (var card in ent.Comp.Cards)
+            foreach (var card in GetCardListVisualState(ent.Comp).CardList)
             {
                 if (TryGetTakeCardVerb(ent, user, card.CardInx, priority--, out var takeVerb))
                     args.Verbs.Add(takeVerb);
@@ -136,10 +133,6 @@ public abstract partial class SharedCardSystem
         verb = null!;
         if (user == null)
             return false;
-        if (!ent.Comp.Fanned && !ent.Comp.Flipped)
-        {
-            return false;
-        }
         var card = GetCardFromInx(ent.Comp.Cards, cardInx);
         verb = new AlternativeVerb
         {
