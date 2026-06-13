@@ -45,18 +45,3 @@ public sealed class CardDropMergeEvent : EntityEventArgs
         Merger = merger;
     }
 }
-
-[Serializable, NetSerializable]
-public sealed class CardTryTakeEvent : EntityEventArgs
-{
-    public readonly NetEntity Cards;
-    public readonly NetEntity User;
-    public readonly int CardInx;
-
-    public CardTryTakeEvent(NetEntity cards, NetEntity user, int cardInx)
-    {
-        Cards = cards;
-        User = user;
-        CardInx = cardInx;
-    }
-}

@@ -9,8 +9,8 @@ namespace Content.Shared.Cards;
 public sealed partial class CardsComponent : Component
 {
     // List of current cards in the deck
-    [DataField(customTypeSerializer: typeof(CardDataSerializer)), AutoNetworkedField]
-    public List<CardData> Cards;
+    [DataField(required: true,customTypeSerializer: typeof(CardDataSerializer)), AutoNetworkedField]
+    public List<CardData> Cards = new();
 
     // Number of current cards in the deck
     [ViewVariables]

@@ -11,6 +11,12 @@ namespace Content.Shared.Cards;
 
 public abstract partial class SharedCardSystem
 {
+    private void InitializeVisuals()
+    {
+        SubscribeLocalEvent<CardsComponent, ComponentStartup>(OnCardsStarted);
+        SubscribeLocalEvent<CardsComponent, ExaminedEvent>(OnCardsExamined);
+        SubscribeLocalEvent<CardsComponent, StackCountChangedEvent>(OnStackCountChanged);
+    }
     private void OnCardsStarted(Entity<CardsComponent> ent, ref ComponentStartup args)
     {
         UpdateVisualState(ent);
@@ -111,7 +117,8 @@ public abstract partial class SharedCardSystem
     )
     {
         // Plays animation for a split or merge where the cards taken are from somewhere in the deck
-        List<CardData> selected = new List<CardData> { mergee.Comp.Cards[cardInx] };
+        var card = GetCardFromInx(mergee.Comp.Cards, cardInx);
+        List<CardData> selected = new List<CardData> { card };
         PlayCardAnimation(merger, mergee, selected, playOnUser: playOnUser);
     }
 
@@ -181,3 +188,4 @@ public sealed class CardListVisualState : ICloneable
 
     public object Clone() => new CardListVisualState(CardList, Start, Count);
 }
+

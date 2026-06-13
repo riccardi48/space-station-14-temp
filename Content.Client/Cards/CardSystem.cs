@@ -8,8 +8,6 @@ using Content.Shared.Stacks;
 using Content.Shared.Storage.EntitySystems;
 using JetBrains.Annotations;
 using Robust.Client.GameObjects;
-using Robust.Client.Graphics;
-using Robust.Client.ResourceManagement;
 using Robust.Client.State;
 using Robust.Client.UserInterface.Controls;
 using Robust.Shared.Map;

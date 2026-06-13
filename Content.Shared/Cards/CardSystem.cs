@@ -1,11 +1,7 @@
 using System.Linq;
-using Content.Shared.Examine;
 using Content.Shared.Hands.EntitySystems;
-using Content.Shared.Interaction;
-using Content.Shared.Interaction.Events;
 using Content.Shared.Popups;
 using Content.Shared.Stacks;
-using Content.Shared.Verbs;
 using Robust.Shared.Audio.Systems;
 using Robust.Shared.Containers;
 using Robust.Shared.Prototypes;
@@ -41,6 +37,8 @@ public abstract partial class SharedCardSystem : EntitySystem
 
     [Dependency]
     protected IPrototypeManager PrototypeManager = default!;
+    private int _inxCounter = 0;
+
     [Dependency]
     private ExamineSystemShared _examineSystem = default!;
 
@@ -51,17 +49,8 @@ public abstract partial class SharedCardSystem : EntitySystem
         SubscribeLocalEvent<CardsComponent, MergeEvent>(OnMergeEvent);
         SubscribeLocalEvent<CardsComponent, StackSplitEvent>(OnSplitEvent);
         SubscribeLocalEvent<CardsComponent, EntGotInsertedIntoContainerMessage>(OnCardsContainerInserted);
-
-        SubscribeLocalEvent<CardsComponent, ComponentStartup>(OnCardsStarted);
-        SubscribeLocalEvent<CardsComponent, ExaminedEvent>(OnCardsExamined);
-        SubscribeLocalEvent<CardsComponent, GetVerbsEvent<ExamineVerb>>(OnCardsExaminableVerb);
-        SubscribeLocalEvent<CardsComponent, StackCountChangedEvent>(OnStackCountChanged);
-
-        SubscribeLocalEvent<CardsComponent, ActivateInWorldEvent>(OnCardsActivate);
-        SubscribeLocalEvent<CardsComponent, UseInHandEvent>(OnCardsUse);
-        SubscribeLocalEvent<CardsComponent, GetVerbsEvent<AlternativeVerb>>(OnCardsAlternativeInteract);
-
-        SubscribeNetworkEvent<CardTryTakeEvent>(HandleCardTake);
+        InitializeVisuals();
+        InitializeInteraction();
     }
 
     private void OnCardsInit(Entity<CardsComponent> ent, ref ComponentInit args)
@@ -71,6 +60,8 @@ public abstract partial class SharedCardSystem : EntitySystem
             var card = ent.Comp.Cards[i];
             card.BaseState = card.BaseState == string.Empty ? ent.Comp.BaseState : card.BaseState;
             card.CardBack = card.CardBack == string.Empty ? ent.Comp.CardBack : card.CardBack;
+            card.CardInx = _inxCounter;
+            _inxCounter++;
             ent.Comp.Cards[i] = card;
         }
     }
@@ -236,8 +227,9 @@ public abstract partial class SharedCardSystem : EntitySystem
         }
 
         // Animation must be before cards are moved
+        var card = GetCardFromInx(cards.Comp.Cards, cardInx);
         PlayCardTakeAnimation((split.Value, newCardsComp), cards, cardInx);
-        MoveCards(newCardsComp, cards.Comp, new List<CardData> { cards.Comp.Cards[cardInx] });
+        MoveCards(newCardsComp, cards.Comp, new List<CardData> { card });
 
         // If this is true it is a new deck so copies over the properties
         // Otherwise it doesn't change the deck the card joins
@@ -257,5 +249,10 @@ public abstract partial class SharedCardSystem : EntitySystem
         Dirty(split.Value, newCardsComp);
 
         return true;
+    }
+
+    public CardData GetCardFromInx(List<CardData> cards, int cardInx)
+    {
+        return cards.Find(c => c.CardInx == cardInx);
     }
 }
