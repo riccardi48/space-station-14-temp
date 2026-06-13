@@ -15,6 +15,7 @@ public abstract partial class SharedCardSystem
     {
         SubscribeLocalEvent<CardsComponent, ComponentStartup>(OnCardsStarted);
         SubscribeLocalEvent<CardsComponent, ExaminedEvent>(OnCardsExamined);
+        SubscribeLocalEvent<CardsComponent, GetVerbsEvent<ExamineVerb>>(OnCardsExaminableVerb);
         SubscribeLocalEvent<CardsComponent, StackCountChangedEvent>(OnStackCountChanged);
     }
     private void OnCardsStarted(Entity<CardsComponent> ent, ref ComponentStartup args)
@@ -155,14 +156,6 @@ public abstract partial class SharedCardSystem
         bool playOnUser = false
     );
 
-    private void HandleCardTake(CardTryTakeEvent args)
-    {
-        var ent = GetEntity(args.Cards);
-        var user = GetEntity(args.User);
-
-        if (TryComp<CardsComponent>(ent, out var cardComp) && TryComp<TransformComponent>(user, out var transComp))
-            TryTakeCard((ent, cardComp), (user, transComp), args.CardInx, out _);
-    }
 }
 
 [Serializable, NetSerializable]

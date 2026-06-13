@@ -2,12 +2,14 @@ using System.Linq;
 using System.Numerics;
 using Content.Client.Examine;
 using Content.Client.Gameplay;
+using Content.Client.Verbs;
 using Content.Shared.Cards;
 using Content.Shared.Interaction.Events;
 using Content.Shared.Stacks;
 using Content.Shared.Storage.EntitySystems;
 using JetBrains.Annotations;
 using Robust.Client.GameObjects;
+using Robust.Client.Graphics;
 using Robust.Client.State;
 using Robust.Client.UserInterface.Controls;
 using Robust.Shared.Map;
@@ -39,8 +41,12 @@ public sealed partial class CardSystem : SharedCardSystem
 
     [Dependency]
     private IEyeManager _eyeManager = default!;
+
     [Dependency]
     private ISharedPlayerManager _playerManager = default!;
+
+    [Dependency]
+    private VerbSystem _verbs = default!;
 
     private const string RsiPath = "/Textures/Objects/Fun/PlayingCards/nanotrasenbasiccards.rsi";
 
@@ -53,7 +59,16 @@ public sealed partial class CardSystem : SharedCardSystem
         SubscribeLocalEvent<CardsComponent, DroppedEvent>(OnCardsDropped);
         OnCardButtonClicked += args =>
         {
-            RaisePredictiveEvent(new CardTryTakeEvent(GetNetEntity(args.cards), GetNetEntity(args.user), args.cardInx));
+            if (
+                TryGetTakeCardVerb(
+                    args.cards,
+                    args.user,
+                    args.cardInx,
+                    -200 - args.cards.Comp.Cards.FindIndex(c => c.CardInx == args.cardInx),
+                    out var verb
+                )
+            )
+                _verbs.ExecuteVerb(args.cards.Owner, verb);
         };
     }
 
@@ -190,6 +205,8 @@ public sealed partial class CardSystem : SharedCardSystem
 
     private void OnAppearanceChanged(EntityUid uid, CardsComponent component, ref AppearanceChangeEvent args)
     {
+        if (uid == _spriteView?._cards?.Owner)
+            _spriteView?.UpdateCards((uid, component));
         Appearance.TryGetData<bool>(uid, CardVisuals.IsFlipped, out var flipped, args.Component);
 
         // Card visuals state will only have one card in it if not fanned

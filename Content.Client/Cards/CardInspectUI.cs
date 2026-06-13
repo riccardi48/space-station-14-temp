@@ -1,12 +1,8 @@
 using System.Numerics;
-using Content.Client.Cargo.Systems;
 using Content.Shared.Cards;
-using Robust.Client.GameObjects;
 using Robust.Client.Graphics;
-using Robust.Client.UserInterface;
 using Robust.Client.UserInterface.Controls;
 using Robust.Shared.Player;
-using Robust.Shared.Utility;
 using static Robust.Client.UserInterface.Control;
 
 namespace Content.Client.Cards;
@@ -34,50 +30,13 @@ public sealed partial class CardSystem
         _spriteView.SetCards(cards, 12, 20, OnCardButtonClicked);
     }
 
-    public override bool TryShuffleCards(Entity<CardsComponent> cards)
-    {
-        var toReturn = base.TryShuffleCards(cards);
-        if (_spriteView != null)
-            _spriteView.UpdateCards(cards);
-        return toReturn;
-    }
-
-    public override bool TryFlipCards(Entity<CardsComponent> cards)
-    {
-        var toReturn = base.TryFlipCards(cards);
-        if (_spriteView != null)
-            _spriteView.UpdateCards(cards);
-        return toReturn;
-    }
-
-    public override bool TryFanCards(Entity<CardsComponent> cards)
-    {
-        var toReturn = base.TryFanCards(cards);
-        if (_spriteView != null)
-            _spriteView.UpdateCards(cards);
-        return toReturn;
-    }
-
-    public override bool TryTakeCard(
-        Entity<CardsComponent> cards,
-        Entity<TransformComponent?> user,
-        int cardInx,
-        out EntityUid? split
-    )
-    {
-        var toReturn = base.TryTakeCard(cards, user, cardInx, out split);
-        if (_spriteView != null)
-            _spriteView.UpdateCards(cards);
-        return toReturn;
-    }
-
     public sealed class CardSpriteView : SpriteView
     {
         private readonly LayoutContainer _buttonOverlay;
         private readonly ISharedPlayerManager _playerManager;
         private readonly float _pixelsPerMeter;
 
-        private Entity<CardsComponent>? _cards;
+        public Entity<CardsComponent>? _cards;
         private float _cardWidth;
         private float _cardHeight;
         private Action<(Entity<CardsComponent> cards, EntityUid user, int cardInx)>? _onCardClicked;
@@ -171,8 +130,7 @@ public sealed partial class CardSystem
                 rotation *= -1;
 
                 var button = new CardHoverButton(rotation, _cardWidth * buttonScale, _cardHeight * buttonScale);
-                var cardInx = visualState.Start + i;
-                button.OnPressed += _ => _onCardClicked?.Invoke((_cards!.Value, user.Value, cardInx));
+                button.OnPressed += _ => _onCardClicked?.Invoke((_cards!.Value, user.Value, card.CardInx));
 
                 var screenPos = center + offset * spriteScale;
                 LayoutContainer.SetPosition(
