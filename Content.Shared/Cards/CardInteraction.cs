@@ -99,14 +99,13 @@ public abstract partial class SharedCardSystem
             {
                 for (var i = 0; i < ent.Comp.Cards.Count; i++)
                 {
-                    var index = ent.Comp.Cards.Count - i - 1;
-                    var card = ent.Comp.Cards[index];
 
+                    var card = ent.Comp.Cards[ent.Comp.Cards.Count - i - 1];
                     args.Verbs.Add(
                         new AlternativeVerb
                         {
                             Text = Loc.GetString(card.CardId.ToString().Replace('_', '-')),
-                            Act = () => TryTakeCard(ent, user, index, out _),
+                            Act = () => TryTakeCard(ent, user, card.CardInx, out _),
                             Category = VerbCategory.TakeCard,
                             Priority = priority--,
                         }

@@ -37,6 +37,7 @@ public abstract partial class SharedCardSystem : EntitySystem
 
     [Dependency]
     protected IPrototypeManager PrototypeManager = default!;
+    private int _inxCounter = 0;
 
     public override void Initialize()
     {
@@ -56,6 +57,8 @@ public abstract partial class SharedCardSystem : EntitySystem
             var card = ent.Comp.Cards[i];
             card.BaseState = card.BaseState == string.Empty ? ent.Comp.BaseState : card.BaseState;
             card.CardBack = card.CardBack == string.Empty ? ent.Comp.CardBack : card.CardBack;
+            card.CardInx = _inxCounter;
+            _inxCounter++;
             ent.Comp.Cards[i] = card;
         }
     }
@@ -221,8 +224,9 @@ public abstract partial class SharedCardSystem : EntitySystem
         }
 
         // Animation must be before cards are moved
+        var card = cards.Comp.Cards.Find(c => c.CardInx == cardInx);
         PlayCardTakeAnimation((split.Value, newCardsComp), cards, cardInx);
-        MoveCards(newCardsComp, cards.Comp, new List<CardData> { cards.Comp.Cards[cardInx] });
+        MoveCards(newCardsComp, cards.Comp, new List<CardData> { card });
 
         // If this is true it is a new deck so copies over the properties
         // Otherwise it doesn't change the deck the card joins
