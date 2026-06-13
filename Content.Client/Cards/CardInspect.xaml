@@ -1,6 +1,7 @@
 <BoxContainer
     xmlns="https://spacestation14.io"
     xmlns:gfx="clr-namespace:Robust.Client.Graphics;assembly=Robust.Client"
-    Orientation="Vertical">
+    Orientation="Vertical"
+    HorizontalAlignment = "Center">
     <LayoutContainer Name="SpriteHolder" Access="Public" />
 </BoxContainer>

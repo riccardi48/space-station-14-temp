@@ -13,6 +13,7 @@ using Robust.Client.ResourceManagement;
 using Robust.Client.State;
 using Robust.Client.UserInterface.Controls;
 using Robust.Shared.Map;
+using Robust.Shared.Player;
 using Robust.Shared.Prototypes;
 using Robust.Shared.Utility;
 using DrawDepth = Content.Shared.DrawDepth.DrawDepth;
@@ -37,6 +38,12 @@ public sealed partial class CardSystem : SharedCardSystem
 
     [Dependency]
     private ExamineSystem _examineSystem = default!;
+
+    [Dependency]
+    private IEyeManager _eyeManager = default!;
+    [Dependency]
+    private ISharedPlayerManager _playerManager = default!;
+
     private const string RsiPath = "/Textures/Objects/Fun/PlayingCards/nanotrasenbasiccards.rsi";
 
     public override void Initialize()
@@ -48,7 +55,7 @@ public sealed partial class CardSystem : SharedCardSystem
         SubscribeLocalEvent<CardsComponent, DroppedEvent>(OnCardsDropped);
         OnCardButtonClicked += args =>
         {
-            Popup.PopupCursor($"{args.CardId}");
+            TryTakeCard(args.cards, args.user, args.cardInx, out _);
         };
     }
 

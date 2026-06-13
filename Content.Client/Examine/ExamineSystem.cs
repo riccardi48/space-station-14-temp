@@ -452,7 +452,7 @@ namespace Content.Client.Examine
                         button.OnPressed -= VerbButtonPressed;
                     }
                 }
-                _examineTooltipOpen.Dispose();
+                _examineTooltipOpen.Orphan();
                 _examineTooltipOpen = null;
             }
 

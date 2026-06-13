@@ -1,168 +1,258 @@
 using System.Numerics;
+using Content.Client.Cargo.Systems;
 using Content.Shared.Cards;
 using Robust.Client.GameObjects;
 using Robust.Client.Graphics;
 using Robust.Client.UserInterface;
 using Robust.Client.UserInterface.Controls;
+using Robust.Shared.Player;
 using Robust.Shared.Utility;
+using static Robust.Client.UserInterface.Control;
 
 namespace Content.Client.Cards;
 
 public sealed partial class CardSystem
 {
-    public event Action<CardData>? OnCardButtonClicked;
+    public event Action<(Entity<CardsComponent> cards, EntityUid user, int cardInx)>? OnCardButtonClicked;
+
+    private CardSpriteView? _spriteView;
 
     protected override void OpenInspectUI(EntityUid player, Entity<CardsComponent> cards)
     {
         CardInspect menu = new CardInspect();
 
-        var spriteView = new CardSpriteView
+        _spriteView = new CardSpriteView(_playerManager)
         {
             OverrideDirection = Direction.South,
-            SetSize = new Vector2(250, 250),
-            Stretch = SpriteView.StretchMode.Fill,
+            Scale = new Vector2(3, 3),
+            HorizontalAlignment = HAlignment.Center,
         };
-        spriteView.SetEntity(cards);
-        spriteView.SetVisualStateFunc(GetCardListVisualState);
-        menu.SpriteHolder.AddChild(spriteView);
+        _spriteView.SetEntity(cards);
+        _spriteView.SetVisualStateFunc(GetCardListVisualState);
+        menu.SpriteHolder.AddChild(_spriteView);
         _examineSystem.SendExamineControl(player, cards.Owner, menu, false);
-        spriteView.SetCards(cards, 12, 20, OnCardButtonClicked);
+        _spriteView.SetCards(cards, 12, 20, OnCardButtonClicked);
     }
-}
 
-public sealed class CardSpriteView : SpriteView
-{
-    private readonly Control _buttonOverlay;
-    private CardsComponent? _cards;
-    private float _cardWidth;
-    private float _cardHeight;
-    private Action<CardData>? _onCardClicked;
-
-    private Func<CardsComponent, CardListVisualState>? _getVisualState;
-
-    private CardListVisualState VisualState
+    public override bool TryShuffleCards(Entity<CardsComponent> cards)
     {
-        get
+        var toReturn = base.TryShuffleCards(cards);
+        if (_spriteView != null)
+            _spriteView.UpdateCards(cards);
+        return toReturn;
+    }
+
+    public override bool TryFlipCards(Entity<CardsComponent> cards)
+    {
+        var toReturn = base.TryFlipCards(cards);
+        if (_spriteView != null)
+            _spriteView.UpdateCards(cards);
+        return toReturn;
+    }
+
+    public override bool TryFanCards(Entity<CardsComponent> cards)
+    {
+        var toReturn = base.TryFanCards(cards);
+        if (_spriteView != null)
+            _spriteView.UpdateCards(cards);
+        return toReturn;
+    }
+
+    public override bool TryTakeCard(
+        Entity<CardsComponent> cards,
+        Entity<TransformComponent?> user,
+        int cardInx,
+        out EntityUid? split
+    )
+    {
+        var toReturn = base.TryTakeCard(cards, user, cardInx, out split);
+        if (_spriteView != null)
+            _spriteView.UpdateCards(cards);
+        return toReturn;
+    }
+
+    public sealed class CardSpriteView : SpriteView
+    {
+        private readonly LayoutContainer _buttonOverlay;
+
+        private Entity<CardsComponent?> _cards;
+        private float _cardWidth;
+        private float _cardHeight;
+        private ISharedPlayerManager _playerManager;
+        private Action<(Entity<CardsComponent> cards, EntityUid user, int cardInx)>? _onCardClicked;
+
+        private Func<CardsComponent, CardListVisualState>? _getVisualState;
+
+        private CardListVisualState VisualState
         {
-            if (_cards == null || _getVisualState == null)
-                return new CardListVisualState(new List<CardData>(), 0, 0);
-            return _getVisualState(_cards);
+            get
+            {
+                if (_cards == null || _getVisualState == null)
+                    return new CardListVisualState(new List<CardData>(), 0, 0);
+                return _getVisualState(_cards);
+            }
+        }
+
+        public void SetVisualStateFunc(Func<CardsComponent, CardListVisualState> getVisualState)
+        {
+            _getVisualState = getVisualState;
+        }
+
+        public CardSpriteView(ISharedPlayerManager playerManager)
+        {
+            _playerManager = playerManager;
+            _buttonOverlay = new LayoutContainer
+            {
+                MouseFilter = MouseFilterMode.Ignore,
+                VerticalExpand = true,
+                HorizontalExpand = true,
+                HorizontalAlignment = HAlignment.Center,
+            };
+            AddChild(_buttonOverlay);
+        }
+
+        public void SetCards(
+            Entity<CardsComponent> cards,
+            float cardWidth,
+            float cardHeight,
+            Action<(Entity<CardsComponent> cards, EntityUid user, int cardInx)>? onCardClicked
+        )
+        {
+            _cards = cards.Comp;
+            _cardWidth = cardWidth;
+            _cardHeight = cardHeight;
+            _onCardClicked = onCardClicked;
+            RebuildButtons();
+        }
+
+        public void UpdateCards(Entity<CardsComponent> cards)
+        {
+            _cards = cards.Comp;
+            RebuildButtons();
+        }
+
+        protected override void Resized()
+        {
+            base.Resized();
+            _buttonOverlay.SetSize = Size;
+            RebuildButtons();
+        }
+
+        private float GetSpriteToUIScale()
+        {
+            if (Sprite == null)
+                return 1f;
+            return EyeManager.PixelsPerMeter * Scale.X;
+        }
+
+        private void RebuildButtons()
+        {
+            _buttonOverlay.RemoveAllChildren();
+
+            var visualState = VisualState;
+            var count = visualState.Count;
+            if (count == 0)
+                return;
+
+            var center = new Vector2(Size.X / 2f, Size.Y / 2f);
+            var spriteScale = GetSpriteToUIScale();
+            var scale = Scale.X;
+            var radius = CardSystem.FanRadius(count);
+
+            for (var i = 0; i < count; i++)
+            {
+                var card = visualState.CardList[visualState.Start + i];
+                var (offset, rotation) = CardSystem.GetCardPosRot(i, count, radius);
+                offset.Y *= -1;
+                rotation *= -1;
+
+                var button = new CardHoverButton(rotation, _cardWidth * scale, _cardHeight * scale);
+                var user = _playerManager.LocalSession?.AttachedEntity;
+                if (user == null)
+                    continue;
+                button.OnPressed += _ => _onCardClicked?.Invoke((_cards, user.Value, visualState.Start + i));
+
+                var screenPos = center + offset * spriteScale;
+                _buttonOverlay.AddChild(button);
+                Log.Info($"{screenPos.X} {screenPos.Y}");
+                LayoutContainer.SetPosition(
+                    button,
+                    screenPos - new Vector2(button.SetSize.X / 2f, button.SetSize.Y / 2f)
+                );
+            }
         }
     }
 
-    public void SetVisualStateFunc(Func<CardsComponent, CardListVisualState> getVisualState)
+    public sealed class CardHoverButton : ContainerButton
     {
-        _getVisualState = getVisualState;
-        RebuildButtons();
-    }
+        private bool _hovered;
+        private readonly Angle _rotation;
 
-    public CardSpriteView()
-    {
-        _buttonOverlay = new Control { MouseFilter = MouseFilterMode.Ignore };
-        AddChild(_buttonOverlay);
-    }
-
-    public void SetCards(Entity<CardsComponent> cards, float cardWidth, float cardHeight, Action<CardData>? onCardClicked)
-    {
-        SpriteSystem ??= EntMan.System<SpriteSystem>();
-        SpriteSystem.ForceUpdate(cards.Owner);
-        _cards = cards.Comp;
-        _cardWidth = cardWidth;
-        _cardHeight = cardHeight;
-        _onCardClicked = onCardClicked;
-        RebuildButtons();
-    }
-
-    protected override void Resized()
-    {
-        base.Resized();
-        _buttonOverlay.SetSize = Size;
-        RebuildButtons();
-    }
-
-    private void RebuildButtons()
-    {
-        _buttonOverlay.RemoveAllChildren();
-
-        var visualState = VisualState;
-        var count = visualState.Count;
-        if (count == 0)
-            return;
-
-        var center = new Vector2(Size.X / 2f, Size.Y / 2f);
-        var stretchVec = Stretch switch
+        public CardHoverButton(Angle rotation, float width, float height)
         {
-            StretchMode.Fit => Vector2.Min(Size / SetSize, Vector2.One),
-            StretchMode.Fill => Size / SetSize,
-            _ => Vector2.One,
-        };
-        var stretch = MathF.Min(stretchVec.X, stretchVec.Y);
-        var scale = (Scale * stretch).X;
-
-        for (var i = 0; i < count; i++)
-        {
-            var card = visualState.CardList[visualState.Start + i];
-            var (offset, rotation) = CardSystem.GetCardPosRot(i, count);
-
-            var button = new CardHoverButton(rotation, _cardWidth * scale, _cardHeight * scale);
-            button.OnPressed += _ => _onCardClicked?.Invoke(card);
-
-            var screenPos = center + offset * scale;
-            LayoutContainer.SetPosition(button, screenPos - new Vector2(button.SetSize.X / 2f, button.SetSize.Y / 2f));
-            _buttonOverlay.AddChild(button);
+            _rotation = rotation;
+            SetSize = new Vector2(width, height);
+            MouseFilter = MouseFilterMode.Stop;
+            OnMouseEntered += _ =>
+            {
+                _hovered = true;
+                UpdateDraw();
+            };
+            OnMouseExited += _ =>
+            {
+                _hovered = false;
+                UpdateDraw();
+            };
         }
-    }
-}
 
-public sealed class CardHoverButton : ContainerButton
-{
-    private bool _hovered;
-    private readonly Angle _rotation;
-
-    public CardHoverButton(Angle rotation, float width, float height)
-    {
-        _rotation = rotation;
-        SetSize = new Vector2(width, height);
-        MouseFilter = MouseFilterMode.Stop;
-        OnMouseEntered += _ =>
+        protected override void Draw(DrawingHandleScreen handle)
         {
-            _hovered = true;
-            UpdateDraw();
-        };
-        OnMouseExited += _ =>
+            base.Draw(handle);
+            if (!_hovered)
+                return;
+
+            var center = new Vector2(PixelSizeBox.Width / 2f, PixelSizeBox.Height / 2f);
+            var halfW = PixelSizeBox.Width / 2f;
+            var halfH = PixelSizeBox.Height / 2f;
+
+            Vector2 RotatePoint(Vector2 point)
+            {
+                var cos = (float)Math.Cos(_rotation.Theta);
+                var sin = (float)Math.Sin(_rotation.Theta);
+                var dx = point.X - center.X;
+                var dy = point.Y - center.Y;
+                return new Vector2(center.X + dx * cos - dy * sin, center.Y + dx * sin + dy * cos);
+            }
+
+            var tl = RotatePoint(new Vector2(center.X - halfW, center.Y - halfH));
+            var tr = RotatePoint(new Vector2(center.X + halfW, center.Y - halfH));
+            var br = RotatePoint(new Vector2(center.X + halfW, center.Y + halfH));
+            var bl = RotatePoint(new Vector2(center.X - halfW, center.Y + halfH));
+
+            handle.DrawLine(tl, tr, Color.White);
+            handle.DrawLine(tr, br, Color.White);
+            handle.DrawLine(br, bl, Color.White);
+            handle.DrawLine(bl, tl, Color.White);
+        }
+
+        protected override bool HasPoint(Vector2 point)
         {
-            _hovered = false;
-            UpdateDraw();
-        };
-    }
+            var center = new Vector2(Size.X / 2f, Size.Y / 2f);
+            var halfW = Size.X / 2f;
+            var halfH = Size.Y / 2f;
 
-    protected override void Draw(DrawingHandleScreen handle)
-    {
-        base.Draw(handle);
-        if (!_hovered)
-            return;
-
-        var center = new Vector2(PixelSizeBox.Width / 2f, PixelSizeBox.Height / 2f);
-        var halfW = PixelSizeBox.Width / 2f;
-        var halfH = PixelSizeBox.Height / 2f;
-
-        Vector2 RotatePoint(Vector2 point)
-        {
-            var cos = (float)Math.Cos(_rotation.Theta);
-            var sin = (float)Math.Sin(_rotation.Theta);
+            // Translate point to be relative to center
             var dx = point.X - center.X;
             var dy = point.Y - center.Y;
-            return new Vector2(center.X + dx * cos - dy * sin, center.Y + dx * sin + dy * cos);
+
+            // Rotate point into local unrotated space
+            var cos = (float)Math.Cos(-_rotation.Theta);
+            var sin = (float)Math.Sin(-_rotation.Theta);
+            var localX = dx * cos - dy * sin;
+            var localY = dx * sin + dy * cos;
+
+            // Check if point is within unrotated rectangle bounds
+            return Math.Abs(localX) <= halfW && Math.Abs(localY) <= halfH;
         }
-
-        var tl = RotatePoint(new Vector2(center.X - halfW, center.Y - halfH));
-        var tr = RotatePoint(new Vector2(center.X + halfW, center.Y - halfH));
-        var br = RotatePoint(new Vector2(center.X + halfW, center.Y + halfH));
-        var bl = RotatePoint(new Vector2(center.X - halfW, center.Y + halfH));
-
-        handle.DrawLine(tl, tr, Color.White);
-        handle.DrawLine(tr, br, Color.White);
-        handle.DrawLine(br, bl, Color.White);
-        handle.DrawLine(bl, tl, Color.White);
     }
 }

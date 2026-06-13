@@ -163,7 +163,7 @@ public abstract partial class SharedCardSystem : EntitySystem
         return comp.Cards.Take(delta).ToList();
     }
 
-    public bool TryShuffleCards(Entity<CardsComponent> cards)
+    public virtual bool TryShuffleCards(Entity<CardsComponent> cards)
     {
         // Shuffles cards
         // Currently mis-predicted
@@ -175,7 +175,7 @@ public abstract partial class SharedCardSystem : EntitySystem
         return true;
     }
 
-    public bool TryFlipCards(Entity<CardsComponent> cards)
+    public virtual bool TryFlipCards(Entity<CardsComponent> cards)
     {
         cards.Comp.Flipped = !cards.Comp.Flipped;
         UpdateVisualState(cards);
@@ -183,7 +183,7 @@ public abstract partial class SharedCardSystem : EntitySystem
         return true;
     }
 
-    public bool TryFanCards(Entity<CardsComponent> cards)
+    public virtual bool TryFanCards(Entity<CardsComponent> cards)
     {
         cards.Comp.Fanned = !cards.Comp.Fanned;
         UpdateVisualState(cards);
@@ -193,7 +193,7 @@ public abstract partial class SharedCardSystem : EntitySystem
         return true;
     }
 
-    public bool TryTakeCard(
+    public virtual bool TryTakeCard(
         Entity<CardsComponent> cards,
         Entity<TransformComponent?> user,
         int cardInx,
