@@ -92,7 +92,7 @@ public abstract partial class SharedCardSystem
     )
     {
         // Plays animation for a split or merge where the cards taken are from somewhere in the deck
-        var card = mergee.Comp.Cards.Find(c => c.CardInx == cardInx);
+        var card = GetCardFromInx(mergee.Comp.Cards, cardInx);
         List<CardData> selected = new List<CardData> { card };
         PlayCardAnimation(merger, mergee, selected, playOnUser: playOnUser);
     }
@@ -155,43 +155,3 @@ public sealed class CardListVisualState : ICloneable
     public object Clone() => new CardListVisualState(CardList, Start, Count);
 }
 
-[Serializable, NetSerializable]
-public sealed class CardAnimationEvent : EntityEventArgs
-{
-    public readonly NetCoordinates MergerCoords;
-    public readonly bool MergeeFlipped;
-    public readonly NetCoordinates MergeeCoords;
-    public readonly Angle MergeeRotation;
-    public readonly ProtoId<StackPrototype> StackId;
-    public readonly List<CardData> Selected;
-
-    public CardAnimationEvent(
-        NetCoordinates mergerCoords,
-        bool mergeeFlipped,
-        NetCoordinates mergeeCoords,
-        Angle mergeeRotation,
-        ProtoId<StackPrototype> stackId,
-        List<CardData> selected
-    )
-    {
-        MergerCoords = mergerCoords;
-        MergeeFlipped = mergeeFlipped;
-        MergeeCoords = mergeeCoords;
-        MergeeRotation = mergeeRotation;
-        StackId = stackId;
-        Selected = selected;
-    }
-}
-
-[Serializable, NetSerializable]
-public sealed class CardDropMergeEvent : EntityEventArgs
-{
-    public readonly NetEntity Mergee;
-    public readonly NetEntity Merger;
-
-    public CardDropMergeEvent(NetEntity merger, NetEntity mergee)
-    {
-        Mergee = mergee;
-        Merger = merger;
-    }
-}

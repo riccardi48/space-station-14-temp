@@ -224,7 +224,7 @@ public abstract partial class SharedCardSystem : EntitySystem
         }
 
         // Animation must be before cards are moved
-        var card = cards.Comp.Cards.Find(c => c.CardInx == cardInx);
+        var card = GetCardFromInx(cards.Comp.Cards, cardInx);
         PlayCardTakeAnimation((split.Value, newCardsComp), cards, cardInx);
         MoveCards(newCardsComp, cards.Comp, new List<CardData> { card });
 
@@ -246,5 +246,10 @@ public abstract partial class SharedCardSystem : EntitySystem
         Dirty(split.Value, newCardsComp);
 
         return true;
+    }
+
+    public CardData GetCardFromInx(List<CardData> cards, int cardInx)
+    {
+        return cards.Find(c => c.CardInx == cardInx);
     }
 }

@@ -14,6 +14,7 @@ public abstract partial class SharedCardSystem
         SubscribeLocalEvent<CardsComponent, UseInHandEvent>(OnCardsUse);
         SubscribeLocalEvent<CardsComponent, GetVerbsEvent<AlternativeVerb>>(OnCardsAlternativeInteract);
     }
+
     // When 'E' pressed in the world
     private void OnCardsActivate(Entity<CardsComponent> ent, ref ActivateInWorldEvent args)
     {
@@ -55,77 +56,118 @@ public abstract partial class SharedCardSystem
 
         var user = args.User;
 
-        args.Verbs.Add(
-            new AlternativeVerb
-            {
-                Text = Loc.GetString("comp-cards-flip"),
-                Act = () => TryFlipCards(ent),
-                Priority = -98,
-            }
-        );
+        if (TryGetFlipCardVerb(ent, user, out var flipVerb))
+            args.Verbs.Add(flipVerb);
 
-        args.Verbs.Add(
-            new AlternativeVerb
-            {
-                Text = Loc.GetString("comp-cards-shuffle"),
-                Act = () => TryShuffleCards(ent),
-                Priority = -99,
-            }
-        );
+        if (TryGetShuffleCardVerb(ent, user, out var shuffleVerb))
+            args.Verbs.Add(shuffleVerb);
 
-        // If the cards are in the current hand don't allow player to take from deck
-        // Maybe bad?
+        if (TryGetFanCardVerb(ent, user, out var fanVerb))
+            args.Verbs.Add(fanVerb);
+
+        if (!ent.Comp.Fanned || Hands.GetActiveItem(user) == ent.Owner)
+            return;
+
+        var priority = -200;
+        if (ent.Comp.Flipped)
+        {
+            foreach (var card in ent.Comp.Cards)
+            {
+                if (TryGetTakeCardVerb(ent, user, card.CardInx, priority--, out var takeVerb))
+                    args.Verbs.Add(takeVerb);
+            }
+        }
+        else
+        {
+            if (TryGetTakeRandomCardVerb(ent, user, priority, out var takeVerb))
+                args.Verbs.Add(takeVerb);
+        }
+    }
+
+    public bool TryGetFlipCardVerb(Entity<CardsComponent> ent, EntityUid user, out AlternativeVerb verb)
+    {
+        verb = new AlternativeVerb
+        {
+            Text = Loc.GetString("comp-cards-flip"),
+            Act = () => TryFlipCards(ent),
+            Priority = -98,
+        };
+        return true;
+    }
+
+    public bool TryGetShuffleCardVerb(Entity<CardsComponent> ent, EntityUid user, out AlternativeVerb verb)
+    {
+        verb = new AlternativeVerb
+        {
+            Text = Loc.GetString("comp-cards-shuffle"),
+            Act = () => TryShuffleCards(ent),
+            Priority = -99,
+        };
+        return true;
+    }
+
+    public bool TryGetFanCardVerb(Entity<CardsComponent> ent, EntityUid user, out AlternativeVerb verb)
+    {
         if (
-            !Container.TryGetContainingContainer(ent.Owner, out var container)
-            || Hands.EnumerateHands(container.Owner).Contains(container.ID)
+            Container.TryGetContainingContainer(ent.Owner, out var container)
+            && !Hands.EnumerateHands(container.Owner).Contains(container.ID)
         )
         {
-            args.Verbs.Add(
-                new AlternativeVerb
-                {
-                    Text = Loc.GetString("comp-cards-fan"),
-                    Act = () => TryFanCards(ent),
-                    Priority = -100,
-                }
-            );
+            verb = null!;
+            return false;
         }
-
-        // If deck is flipped, take a specific card from the deck
-        // Otherwise take a random card from the deck
-        if (ent.Comp.Fanned && Hands.GetActiveItem(user) != ent.Owner)
+        verb = new AlternativeVerb
         {
-            var priority = -200;
-            if (ent.Comp.Flipped)
-            {
-                for (var i = 0; i < ent.Comp.Cards.Count; i++)
-                {
+            Text = Loc.GetString("comp-cards-fan"),
+            Act = () => TryFanCards(ent),
+            Priority = -100,
+        };
+        return true;
+    }
 
-                    var card = ent.Comp.Cards[ent.Comp.Cards.Count - i - 1];
-                    args.Verbs.Add(
-                        new AlternativeVerb
-                        {
-                            Text = Loc.GetString(card.CardId.ToString().Replace('_', '-')),
-                            Act = () => TryTakeCard(ent, user, card.CardInx, out _),
-                            Category = VerbCategory.TakeCard,
-                            Priority = priority--,
-                        }
-                    );
-                }
-            }
-            else
-            {
-                var randomIndex = SharedRandomExtensions
-                    .PredictedRandom(Timing, GetNetEntity(ent))
-                    .Next(ent.Comp.Cards.Count);
-                args.Verbs.Add(
-                    new AlternativeVerb
-                    {
-                        Text = Loc.GetString("comp-cards-random-card"),
-                        Act = () => TryTakeCard(ent, user, randomIndex, out _),
-                        Priority = priority,
-                    }
-                );
-            }
+    public bool TryGetTakeCardVerb(
+        Entity<CardsComponent> ent,
+        EntityUid user,
+        int cardInx,
+        int? priority,
+        out AlternativeVerb verb
+    )
+    {
+        if (!ent.Comp.Fanned && !ent.Comp.Flipped)
+        {
+            verb = null!;
+            return false;
         }
+        var card = GetCardFromInx(ent.Comp.Cards, cardInx);
+        verb = new AlternativeVerb
+        {
+            Text = Loc.GetString(card.CardId.ToString().Replace('_', '-')),
+            Act = () => TryTakeCard(ent, user, cardInx, out _),
+            Category = VerbCategory.TakeCard,
+            Priority = priority ?? -300,
+        };
+        return true;
+    }
+
+    public bool TryGetTakeRandomCardVerb(
+        Entity<CardsComponent> ent,
+        EntityUid user,
+        int? priority,
+        out AlternativeVerb verb
+    )
+    {
+        if (!ent.Comp.Fanned)
+        {
+            verb = null!;
+            return false;
+        }
+        var randomIndex = SharedRandomExtensions.PredictedRandom(Timing, GetNetEntity(ent)).Next(ent.Comp.Cards.Count);
+        verb = new AlternativeVerb
+        {
+            Text = Loc.GetString("comp-cards-random-card"),
+            Act = () => TryTakeCard(ent, user, randomIndex, out _),
+            Priority = priority ?? -300,
+        };
+        return true;
     }
 }
