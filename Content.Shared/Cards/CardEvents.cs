@@ -58,3 +58,18 @@ public sealed class CycleCardsEvent : EntityEventArgs
         Amount = amount;
     }
 }
+
+[Serializable, NetSerializable]
+public sealed class TakeCardEvent : EntityEventArgs
+{
+    public readonly NetEntity Cards;
+    public readonly NetEntity User;
+    public readonly int CardInx;
+
+    public TakeCardEvent(NetEntity cards, NetEntity user, int cardInx)
+    {
+        Cards = cards;
+        User = user;
+        CardInx = cardInx;
+    }
+}

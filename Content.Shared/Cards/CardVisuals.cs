@@ -121,7 +121,9 @@ public abstract partial class SharedCardSystem
     {
         // Plays animation for a split or merge where the cards taken are from somewhere in the deck
         var card = GetCardFromInx(mergee.Comp.Cards, cardInx);
-        List<CardData> selected = new List<CardData> { card };
+        if (!card.HasValue)
+            return;
+        List<CardData> selected = new List<CardData> { card.Value };
         PlayCardAnimation(merger, mergee, selected, playOnUser: playOnUser);
     }
 

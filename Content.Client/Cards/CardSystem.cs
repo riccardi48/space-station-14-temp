@@ -17,6 +17,7 @@ using Robust.Client.UserInterface.Controls;
 using Robust.Shared.Map;
 using Robust.Shared.Player;
 using Robust.Shared.Prototypes;
+using Robust.Shared.Timing;
 using Robust.Shared.Utility;
 using DrawDepth = Content.Shared.DrawDepth.DrawDepth;
 
@@ -56,6 +57,9 @@ public sealed partial class CardSystem : SharedCardSystem
     [Dependency]
     private ItemCounterSystem _counterSystem = default!;
 
+    [Dependency]
+    private IGameTiming _timing = default!;
+
     private const string RsiPath = "/Textures/Objects/Fun/PlayingCards/nanotrasenbasiccards.rsi";
 
     public override void Initialize()
@@ -67,18 +71,9 @@ public sealed partial class CardSystem : SharedCardSystem
         SubscribeLocalEvent<CardsComponent, DroppedEvent>(OnCardsDropped);
         OnCardButtonClicked += args =>
         {
-            if (
-                TryGetTakeCardVerb(
-                    args.cards,
-                    args.user,
-                    args.cardInx,
-                    -200
-                        - args.cards.Comp.Cards.FindIndex(c => c.CardInx == args.cardInx)
-                        + GetCardListVisualState(args.cards).Start,
-                    out var verb
-                )
-            )
-                _verbs.ExecuteVerb(args.cards.Owner, verb);
+            RaisePredictiveEvent(
+                new TakeCardEvent(GetNetEntity(args.cards.Owner), GetNetEntity(args.user), args.cardInx)
+            );
         };
         OnCycleClick += args =>
         {
@@ -227,7 +222,6 @@ public sealed partial class CardSystem : SharedCardSystem
         // It will have a max of MaxFanned when fanned
         if (!Appearance.TryGetData<CardListVisualState>(uid, CardVisuals.CardList, out var visualState, args.Component))
             visualState = new CardListVisualState(new List<CardData>(), 0, 0);
-
         if (
             !TryComp<SpriteComponent>(uid, out var sprite)
             || !TryComp<CardsComponent>(uid, out var cards)
@@ -276,7 +270,7 @@ public sealed partial class CardSystem : SharedCardSystem
             var card = visualState.CardList[visualState.Start + i];
             var (baseLayer, layerOne, layerTwo) = CardLayers(i);
 
-            if (!_prototypeManager.TryIndex<CardPrototype>(card.CardId, out var prototype))
+            if (card.CardId.Id == null || !_prototypeManager.TryIndex<CardPrototype>(card.CardId, out var prototype))
                 continue;
 
             var (position, rotation) = GetCardPosRot(i, count, radius);

@@ -50,6 +50,7 @@ public abstract partial class SharedCardSystem : EntitySystem
         SubscribeLocalEvent<CardsComponent, StackSplitEvent>(OnSplitEvent);
         SubscribeLocalEvent<CardsComponent, EntGotInsertedIntoContainerMessage>(OnCardsContainerInserted);
         SubscribeNetworkEvent<CycleCardsEvent>(HandleCycleCardsEvent);
+        SubscribeNetworkEvent<TakeCardEvent>(HandleTakeCardEvent);
         InitializeVisuals();
         InitializeInteraction();
     }
@@ -188,6 +189,14 @@ public abstract partial class SharedCardSystem : EntitySystem
         return true;
     }
 
+    private void HandleTakeCardEvent(TakeCardEvent args)
+    {
+        var cards = GetEntity(args.Cards);
+        var user = GetEntity(args.User);
+        if (TryComp<CardsComponent>(cards, out var comp) && TryComp<TransformComponent>(user, out var transComp))
+            TryTakeCard((cards, comp), (user, transComp), args.CardInx, out _);
+    }
+
     public bool TryTakeCard(
         Entity<CardsComponent> cards,
         Entity<TransformComponent?> user,
@@ -204,8 +213,8 @@ public abstract partial class SharedCardSystem : EntitySystem
 
         // This section is effectively SharedStackSystem.UserSplit()
         if (
-            !Hands.TryGetActiveItem(user.Owner, out split)
-            || !TryComp<StackComponent>(split, out var recipientStack)
+            !TryComp<StackComponent>(split, out var recipientStack)
+            || !Hands.TryGetActiveItem(user.Owner, out split)
             || !Stacks.TryMergeStacks((cards.Owner, stackComp), (split.Value, recipientStack), out _, amount: 1)
         )
         {
@@ -225,8 +234,17 @@ public abstract partial class SharedCardSystem : EntitySystem
 
         // Animation must be before cards are moved
         var card = GetCardFromInx(cards.Comp.Cards, cardInx);
+        if (!card.HasValue)
+        {
+            if (recipientStack == null)
+                return false;
+            Stacks.SetCount((split.Value, recipientStack), recipientStack.Count - 1);
+            Stacks.SetCount((cards.Owner, stackComp), stackComp.Count + 1);
+            return false;
+        }
+
         PlayCardTakeAnimation((split.Value, newCardsComp), cards, cardInx);
-        MoveCards(newCardsComp, cards.Comp, new List<CardData> { card });
+        MoveCards(newCardsComp, cards.Comp, new List<CardData> { card.Value });
         cards.Comp.AmountCycled = Math.Clamp(cards.Comp.AmountCycled, 0, cards.Comp.Cards.Count);
         // If this is true it is a new deck so copies over the properties
         // Otherwise it doesn't change the deck the card joins
@@ -269,8 +287,9 @@ public abstract partial class SharedCardSystem : EntitySystem
         return true;
     }
 
-    public CardData GetCardFromInx(List<CardData> cards, int cardInx)
+    public CardData? GetCardFromInx(List<CardData> cards, int cardInx)
     {
-        return cards.Find(c => c.CardInx == cardInx);
+        var card = cards.Find(c => c.CardInx == cardInx);
+        return card.CardId.Id == null ? null : card;
     }
 }

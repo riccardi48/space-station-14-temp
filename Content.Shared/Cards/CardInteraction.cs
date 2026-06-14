@@ -137,9 +137,11 @@ public abstract partial class SharedCardSystem
         if (user == null)
             return false;
         var card = GetCardFromInx(ent.Comp.Cards, cardInx);
+        if (!card.HasValue)
+            return false;
         verb = new AlternativeVerb
         {
-            Text = Loc.GetString(card.CardId.ToString().Replace('_', '-')),
+            Text = Loc.GetString(card.Value.CardId.ToString().Replace('_', '-')),
             Act = () => TryTakeCard(ent, user, cardInx, out _),
             Category = VerbCategory.TakeCard,
             Priority = priority ?? -300,
