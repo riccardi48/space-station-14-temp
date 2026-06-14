@@ -4,21 +4,16 @@ using Content.Client.Examine;
 using Content.Client.Gameplay;
 using Content.Client.Stack;
 using Content.Client.Storage.Systems;
-using Content.Client.Verbs;
 using Content.Shared.Cards;
 using Content.Shared.Interaction.Events;
 using Content.Shared.Stacks;
 using Content.Shared.Storage.EntitySystems;
 using JetBrains.Annotations;
 using Robust.Client.GameObjects;
-using Robust.Client.Graphics;
 using Robust.Client.State;
-using Robust.Client.UserInterface.Controls;
 using Robust.Shared.Map;
 using Robust.Shared.Player;
 using Robust.Shared.Prototypes;
-using Robust.Shared.Timing;
-using Robust.Shared.Utility;
 using DrawDepth = Content.Shared.DrawDepth.DrawDepth;
 
 namespace Content.Client.Cards;
@@ -34,31 +29,19 @@ public sealed partial class CardSystem : SharedCardSystem
     private SpriteSystem _sprite = default!;
 
     [Dependency]
-    private IPrototypeManager _prototypeManager = default!;
-
-    [Dependency]
     private IStateManager _stateManager = default!;
 
     [Dependency]
     private ExamineSystem _examineSystem = default!;
 
     [Dependency]
-    private IEyeManager _eyeManager = default!;
-
-    [Dependency]
     private ISharedPlayerManager _playerManager = default!;
-
-    [Dependency]
-    private VerbSystem _verbs = default!;
 
     [Dependency]
     private StackSystem _stacks = default!;
 
     [Dependency]
     private ItemCounterSystem _counterSystem = default!;
-
-    [Dependency]
-    private IGameTiming _timing = default!;
 
     private const string RsiPath = "/Textures/Objects/Fun/PlayingCards/nanotrasenbasiccards.rsi";
 
@@ -153,7 +136,7 @@ public sealed partial class CardSystem : SharedCardSystem
         List<CardData> selected
     )
     {
-        if (!_prototypeManager.TryIndex(newStackId, out var newStack))
+        if (!PrototypeManager.TryIndex(newStackId, out var newStack))
             return EntityUid.Invalid;
 
         var ent = Spawn(newStack.Spawn, mergeeCoords);
@@ -278,7 +261,7 @@ public sealed partial class CardSystem : SharedCardSystem
             var card = visualState.CardList[visualState.Start + i];
             var (baseLayer, layerOne, layerTwo) = CardLayers(i);
 
-            if (card.CardId.Id == null || !_prototypeManager.TryIndex<CardPrototype>(card.CardId, out var prototype))
+            if (card.CardId.Id == null || !PrototypeManager.TryIndex<CardPrototype>(card.CardId, out var prototype))
                 continue;
 
             var (position, rotation) = GetCardPosRot(i, count, radius);

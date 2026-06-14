@@ -39,9 +39,6 @@ public abstract partial class SharedCardSystem : EntitySystem
     [Dependency]
     protected IPrototypeManager PrototypeManager = default!;
 
-    [Dependency]
-    private ExamineSystemShared _examineSystem = default!;
-
     public override void Initialize()
     {
         base.Initialize();

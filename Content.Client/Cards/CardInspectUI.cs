@@ -43,8 +43,6 @@ public sealed partial class CardSystem
     {
         private readonly LayoutContainer _buttonOverlay;
         private readonly ISharedPlayerManager _playerManager;
-        private readonly float _pixelsPerMeter;
-
         public Entity<CardsComponent>? _cards;
         private float _cardWidth;
         private float _cardHeight;
