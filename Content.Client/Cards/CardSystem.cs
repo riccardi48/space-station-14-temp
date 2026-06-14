@@ -79,6 +79,14 @@ public sealed partial class CardSystem : SharedCardSystem
         {
             RaisePredictiveEvent(new CycleCardsEvent(GetNetEntity(args.cards.Owner), args.amount));
         };
+        OnFlipButtonClicked += args =>
+        {
+            RaisePredictiveEvent(new FlipCardsEvent(GetNetEntity(args.Owner)));
+        };
+        OnFanButtonClicked += args =>
+        {
+            RaisePredictiveEvent(new FanCardsEvent(GetNetEntity(args.Owner)));
+        };
     }
 
     private void OnCardsDropped(Entity<CardsComponent> ent, ref DroppedEvent args)

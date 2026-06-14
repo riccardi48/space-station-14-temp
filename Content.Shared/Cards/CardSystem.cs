@@ -49,8 +49,11 @@ public abstract partial class SharedCardSystem : EntitySystem
         SubscribeLocalEvent<CardsComponent, MergeEvent>(OnMergeEvent);
         SubscribeLocalEvent<CardsComponent, StackSplitEvent>(OnSplitEvent);
         SubscribeLocalEvent<CardsComponent, EntGotInsertedIntoContainerMessage>(OnCardsContainerInserted);
-        SubscribeNetworkEvent<CycleCardsEvent>(HandleCycleCardsEvent);
+        SubscribeNetworkEvent<ShuffleCardsEvent>(HandleShuffleCardsEvent);
+        SubscribeNetworkEvent<FlipCardsEvent>(HandleFlipCardsEvent);
+        SubscribeNetworkEvent<FanCardsEvent>(HandleFanCardsEvent);
         SubscribeNetworkEvent<TakeCardEvent>(HandleTakeCardEvent);
+        SubscribeNetworkEvent<CycleCardsEvent>(HandleCycleCardsEvent);
         InitializeVisuals();
         InitializeInteraction();
     }
@@ -155,7 +158,12 @@ public abstract partial class SharedCardSystem : EntitySystem
             return comp.Cards.TakeLast(delta).ToList();
         return comp.Cards.Take(delta).ToList();
     }
-
+    private void HandleShuffleCardsEvent(ShuffleCardsEvent args)
+    {
+        var cards = GetEntity(args.Cards);
+        if (TryComp<CardsComponent>(cards, out var comp))
+            TryShuffleCards((cards, comp));
+    }
     public bool TryShuffleCards(Entity<CardsComponent> cards)
     {
         // Shuffles cards
@@ -167,15 +175,26 @@ public abstract partial class SharedCardSystem : EntitySystem
         Dirty(cards.Owner, cards.Comp);
         return true;
     }
+    private void HandleFlipCardsEvent(FlipCardsEvent args)
+    {
+        var cards = GetEntity(args.Cards);
+        if (TryComp<CardsComponent>(cards, out var comp))
+            TryFlipCards((cards, comp));
+    }
 
     public bool TryFlipCards(Entity<CardsComponent> cards)
     {
         cards.Comp.Flipped = !cards.Comp.Flipped;
-        if (cards.Comp.AmountCycled != 0)
-            cards.Comp.AmountCycled = cards.Comp.Cards.Count - cards.Comp.AmountCycled;
         UpdateVisualState(cards);
         Dirty(cards.Owner, cards.Comp);
         return true;
+    }
+
+    private void HandleFanCardsEvent(FanCardsEvent args)
+    {
+        var cards = GetEntity(args.Cards);
+        if (TryComp<CardsComponent>(cards, out var comp))
+            TryFanCards((cards, comp));
     }
 
     public bool TryFanCards(Entity<CardsComponent> cards)

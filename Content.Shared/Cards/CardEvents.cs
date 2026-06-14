@@ -73,3 +73,36 @@ public sealed class TakeCardEvent : EntityEventArgs
         CardInx = cardInx;
     }
 }
+
+[Serializable, NetSerializable]
+public sealed class FlipCardsEvent : EntityEventArgs
+{
+    public readonly NetEntity Cards;
+
+    public FlipCardsEvent(NetEntity cards)
+    {
+        Cards = cards;
+    }
+}
+
+[Serializable, NetSerializable]
+public sealed class FanCardsEvent : EntityEventArgs
+{
+    public readonly NetEntity Cards;
+
+    public FanCardsEvent(NetEntity cards)
+    {
+        Cards = cards;
+    }
+}
+
+[Serializable, NetSerializable]
+public sealed class ShuffleCardsEvent : EntityEventArgs
+{
+    public readonly NetEntity Cards;
+
+    public ShuffleCardsEvent(NetEntity cards)
+    {
+        Cards = cards;
+    }
+}

@@ -12,12 +12,12 @@ namespace Content.Server.Cards;
 public sealed partial class CardSystem : SharedCardSystem
 {
     private int _inxCounter = 0;
+
     public override void Initialize()
     {
         base.Initialize();
 
         SubscribeNetworkEvent<CardDropMergeEvent>(HandleDropMerge);
-
     }
 
     protected override void OnCardsInit(Entity<CardsComponent> ent, ref ComponentInit args)
@@ -32,7 +32,6 @@ public sealed partial class CardSystem : SharedCardSystem
         }
         Dirty(ent.Owner, ent.Comp);
     }
-
 
     protected override void OpenInspectUI(EntityUid player, Entity<CardsComponent> cards) { }
 

@@ -11,6 +11,8 @@ public sealed partial class CardSystem
 {
     public event Action<(Entity<CardsComponent> cards, EntityUid user, int cardInx)>? OnCardButtonClicked;
     public event Action<(Entity<CardsComponent> cards, int amount)>? OnCycleClick;
+    public event Action<Entity<CardsComponent>>? OnFlipButtonClicked;
+    public event Action<Entity<CardsComponent>>? OnFanButtonClicked;
 
     private CardSpriteView? _spriteView;
 
@@ -22,6 +24,8 @@ public sealed partial class CardSystem
         {
             OverrideDirection = Direction.South,
             Scale = new Vector2(3, 3),
+            VerticalExpand = true,
+            HorizontalExpand = true,
             HorizontalAlignment = HAlignment.Center,
         };
         _spriteView.SetEntity(cards);
@@ -29,6 +33,8 @@ public sealed partial class CardSystem
         menu.SpriteHolder.AddChild(_spriteView);
         menu.CycleLeft.OnPressed += _ => OnCycleClick?.Invoke((cards, 1));
         menu.CycleRight.OnPressed += _ => OnCycleClick?.Invoke((cards, -1));
+        menu.Flip.OnPressed += _ => OnFlipButtonClicked?.Invoke(cards);
+        menu.Fan.OnPressed += _ => OnFanButtonClicked?.Invoke(cards);
         _examineSystem.SendExamineControl(player, cards.Owner, menu, false);
         _spriteView.SetCards(cards, 12, 20, OnCardButtonClicked);
     }
