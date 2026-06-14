@@ -45,3 +45,16 @@ public sealed class CardDropMergeEvent : EntityEventArgs
         Merger = merger;
     }
 }
+
+[Serializable, NetSerializable]
+public sealed class CycleCardsEvent : EntityEventArgs
+{
+    public readonly NetEntity Cards;
+    public readonly int Amount;
+
+    public CycleCardsEvent(NetEntity cards, int amount)
+    {
+        Cards = cards;
+        Amount = amount;
+    }
+}

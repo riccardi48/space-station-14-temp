@@ -10,6 +10,7 @@ namespace Content.Client.Cards;
 public sealed partial class CardSystem
 {
     public event Action<(Entity<CardsComponent> cards, EntityUid user, int cardInx)>? OnCardButtonClicked;
+    public event Action<(Entity<CardsComponent> cards, int amount)>? OnCycleClick;
 
     private CardSpriteView? _spriteView;
 
@@ -26,6 +27,8 @@ public sealed partial class CardSystem
         _spriteView.SetEntity(cards);
         _spriteView.SetVisualStateFunc(GetCardListVisualState);
         menu.SpriteHolder.AddChild(_spriteView);
+        menu.CycleLeft.OnPressed += _ => OnCycleClick?.Invoke((cards, 1));
+        menu.CycleRight.OnPressed += _ => OnCycleClick?.Invoke((cards, -1));
         _examineSystem.SendExamineControl(player, cards.Owner, menu, false);
         _spriteView.SetCards(cards, 12, 20, OnCardButtonClicked);
     }

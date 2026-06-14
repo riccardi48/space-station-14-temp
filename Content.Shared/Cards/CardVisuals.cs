@@ -22,7 +22,6 @@ public abstract partial class SharedCardSystem
     private void OnCardsStarted(Entity<CardsComponent> ent, ref ComponentStartup args)
     {
         UpdateVisualState(ent);
-        UpdateStackCount(ent);
     }
 
     private void OnCardsExamined(Entity<CardsComponent> ent, ref ExaminedEvent args)
@@ -73,18 +72,17 @@ public abstract partial class SharedCardSystem
     {
         // If the deck is fanned it changes the visual count to what ever number is below the fanned cards
         // This means that a deck with the same number of cards as the MaxFanned will not have a stack extending of the cards
-        if (!ent.Comp.Fanned)
-            return;
         var visualState = GetCardListVisualState(ent.Comp);
         Appearance.SetData(
             ent.Owner,
             StackVisuals.Actual,
-            ent.Comp.Cards.Count - visualState.Count - ent.Comp.AmountCycled
+            ent.Comp.Cards.Count - visualState.Count - ent.Comp.AmountCycled + 1
         );
     }
 
     private void UpdateVisualState(Entity<CardsComponent> ent)
     {
+        UpdateStackCount(ent);
         if (TryComp<AppearanceComponent>(ent, out var appearance))
         {
             Appearance.SetData(ent, CardVisuals.CardList, GetCardListVisualState(ent.Comp), appearance);

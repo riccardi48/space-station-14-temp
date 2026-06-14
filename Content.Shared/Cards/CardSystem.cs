@@ -49,6 +49,7 @@ public abstract partial class SharedCardSystem : EntitySystem
         SubscribeLocalEvent<CardsComponent, MergeEvent>(OnMergeEvent);
         SubscribeLocalEvent<CardsComponent, StackSplitEvent>(OnSplitEvent);
         SubscribeLocalEvent<CardsComponent, EntGotInsertedIntoContainerMessage>(OnCardsContainerInserted);
+        SubscribeNetworkEvent<CycleCardsEvent>(HandleCycleCardsEvent);
         InitializeVisuals();
         InitializeInteraction();
     }
@@ -106,6 +107,7 @@ public abstract partial class SharedCardSystem : EntitySystem
         // Copy state over to new entity
         splitComp.Flipped = ent.Comp.Flipped;
         splitComp.Fanned = ent.Comp.Fanned;
+        ent.Comp.AmountCycled = Math.Clamp(ent.Comp.AmountCycled, 0, ent.Comp.Cards.Count);
 
         UpdateVisualState(ent);
         UpdateVisualState((args.NewId, splitComp));
@@ -182,7 +184,6 @@ public abstract partial class SharedCardSystem : EntitySystem
             cards.Comp.AmountCycled = 0;
         UpdateVisualState(cards);
         // Stack count updated so the deck below the fan shows the correct number of cards
-        UpdateStackCount(cards);
         Dirty(cards.Owner, cards.Comp);
         return true;
     }
@@ -226,7 +227,7 @@ public abstract partial class SharedCardSystem : EntitySystem
         var card = GetCardFromInx(cards.Comp.Cards, cardInx);
         PlayCardTakeAnimation((split.Value, newCardsComp), cards, cardInx);
         MoveCards(newCardsComp, cards.Comp, new List<CardData> { card });
-
+        cards.Comp.AmountCycled = Math.Clamp(cards.Comp.AmountCycled, 0, cards.Comp.Cards.Count);
         // If this is true it is a new deck so copies over the properties
         // Otherwise it doesn't change the deck the card joins
         if (newCardsComp.Cards.Count == 1)
@@ -243,6 +244,27 @@ public abstract partial class SharedCardSystem : EntitySystem
 
         Dirty(cards.Owner, cards.Comp);
         Dirty(split.Value, newCardsComp);
+
+        return true;
+    }
+
+    private void HandleCycleCardsEvent(CycleCardsEvent args)
+    {
+        var cards = GetEntity(args.Cards);
+        if (TryComp<CardsComponent>(cards, out var comp))
+            TryCycleCards((cards, comp), args.Amount);
+    }
+
+    public bool TryCycleCards(Entity<CardsComponent> cards, int amount)
+    {
+        if (!cards.Comp.Fanned)
+            return false;
+
+        cards.Comp.AmountCycled = Math.Clamp(cards.Comp.AmountCycled + amount, 0, cards.Comp.Cards.Count);
+
+        UpdateVisualState(cards);
+
+        Dirty(cards.Owner, cards.Comp);
 
         return true;
     }

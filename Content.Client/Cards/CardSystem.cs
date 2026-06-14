@@ -80,6 +80,10 @@ public sealed partial class CardSystem : SharedCardSystem
             )
                 _verbs.ExecuteVerb(args.cards.Owner, verb);
         };
+        OnCycleClick += args =>
+        {
+            RaisePredictiveEvent(new CycleCardsEvent(GetNetEntity(args.cards.Owner), args.amount));
+        };
     }
 
     private void OnCardsDropped(Entity<CardsComponent> ent, ref DroppedEvent args)
