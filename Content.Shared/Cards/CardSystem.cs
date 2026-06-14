@@ -213,8 +213,8 @@ public abstract partial class SharedCardSystem : EntitySystem
 
         // This section is effectively SharedStackSystem.UserSplit()
         if (
-            !TryComp<StackComponent>(split, out var recipientStack)
-            || !Hands.TryGetActiveItem(user.Owner, out split)
+            !Hands.TryGetActiveItem(user.Owner, out split)
+            || !TryComp<StackComponent>(split, out var recipientStack)
             || !Stacks.TryMergeStacks((cards.Owner, stackComp), (split.Value, recipientStack), out _, amount: 1)
         )
         {
@@ -236,10 +236,12 @@ public abstract partial class SharedCardSystem : EntitySystem
         var card = GetCardFromInx(cards.Comp.Cards, cardInx);
         if (!card.HasValue)
         {
-            if (recipientStack == null)
+            if (!TryComp<StackComponent>(split, out var splitStack))
                 return false;
-            Stacks.SetCount((split.Value, recipientStack), recipientStack.Count - 1);
-            Stacks.SetCount((cards.Owner, stackComp), stackComp.Count + 1);
+            var count = splitStack.Count;
+            Stacks.SetCount((split.Value, splitStack), count - 1);
+            count = stackComp.Count;
+            Stacks.SetCount((cards.Owner, stackComp), count + 1);
             return false;
         }
 
