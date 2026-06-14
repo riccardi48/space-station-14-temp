@@ -168,6 +168,8 @@ public abstract partial class SharedCardSystem : EntitySystem
     public bool TryFlipCards(Entity<CardsComponent> cards)
     {
         cards.Comp.Flipped = !cards.Comp.Flipped;
+        if (cards.Comp.AmountCycled != 0)
+            cards.Comp.AmountCycled = cards.Comp.Cards.Count - cards.Comp.AmountCycled;
         UpdateVisualState(cards);
         Dirty(cards.Owner, cards.Comp);
         return true;
@@ -176,6 +178,8 @@ public abstract partial class SharedCardSystem : EntitySystem
     public bool TryFanCards(Entity<CardsComponent> cards)
     {
         cards.Comp.Fanned = !cards.Comp.Fanned;
+        if (!cards.Comp.Fanned)
+            cards.Comp.AmountCycled = 0;
         UpdateVisualState(cards);
         // Stack count updated so the deck below the fan shows the correct number of cards
         UpdateStackCount(cards);

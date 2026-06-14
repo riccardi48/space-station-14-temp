@@ -18,6 +18,7 @@ public abstract partial class SharedCardSystem
         SubscribeLocalEvent<CardsComponent, GetVerbsEvent<ExamineVerb>>(OnCardsExaminableVerb);
         SubscribeLocalEvent<CardsComponent, StackCountChangedEvent>(OnStackCountChanged);
     }
+
     private void OnCardsStarted(Entity<CardsComponent> ent, ref ComponentStartup args)
     {
         UpdateVisualState(ent);
@@ -74,9 +75,12 @@ public abstract partial class SharedCardSystem
         // This means that a deck with the same number of cards as the MaxFanned will not have a stack extending of the cards
         if (!ent.Comp.Fanned)
             return;
-        var cardsCount = ent.Comp.Cards.Count;
-        var dummyCount = cardsCount >= ent.Comp.MaxFanned ? cardsCount - ent.Comp.MaxFanned + 1 : 1;
-        Appearance.SetData(ent.Owner, StackVisuals.Actual, dummyCount);
+        var visualState = GetCardListVisualState(ent.Comp);
+        Appearance.SetData(
+            ent.Owner,
+            StackVisuals.Actual,
+            ent.Comp.Cards.Count - visualState.Count - ent.Comp.AmountCycled
+        );
     }
 
     private void UpdateVisualState(Entity<CardsComponent> ent)
@@ -94,7 +98,7 @@ public abstract partial class SharedCardSystem
         // This function controls a lot of the client side sprite
         // Very important this is correct
         var count = Math.Min(cards.Fanned ? cards.MaxFanned : 1, cards.Cards.Count);
-        var start = cards.Flipped ? cards.Cards.Count - count : 0;
+        var start = cards.Flipped ? Math.Max(cards.Cards.Count - count - cards.AmountCycled, 0) : cards.AmountCycled;
         return new CardListVisualState(cards.Cards, start, count);
     }
 
@@ -155,7 +159,6 @@ public abstract partial class SharedCardSystem
         List<CardData> selected,
         bool playOnUser = false
     );
-
 }
 
 [Serializable, NetSerializable]
@@ -181,4 +184,3 @@ public sealed class CardListVisualState : ICloneable
 
     public object Clone() => new CardListVisualState(CardList, Start, Count);
 }
-

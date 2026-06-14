@@ -2,6 +2,8 @@ using System.Linq;
 using System.Numerics;
 using Content.Client.Examine;
 using Content.Client.Gameplay;
+using Content.Client.Stack;
+using Content.Client.Storage.Systems;
 using Content.Client.Verbs;
 using Content.Shared.Cards;
 using Content.Shared.Interaction.Events;
@@ -48,6 +50,12 @@ public sealed partial class CardSystem : SharedCardSystem
     [Dependency]
     private VerbSystem _verbs = default!;
 
+    [Dependency]
+    private StackSystem _stacks = default!;
+
+    [Dependency]
+    private ItemCounterSystem _counterSystem = default!;
+
     private const string RsiPath = "/Textures/Objects/Fun/PlayingCards/nanotrasenbasiccards.rsi";
 
     public override void Initialize()
@@ -64,7 +72,9 @@ public sealed partial class CardSystem : SharedCardSystem
                     args.cards,
                     args.user,
                     args.cardInx,
-                    -200 - args.cards.Comp.Cards.FindIndex(c => c.CardInx == args.cardInx),
+                    -200
+                        - args.cards.Comp.Cards.FindIndex(c => c.CardInx == args.cardInx)
+                        + GetCardListVisualState(args.cards).Start,
                     out var verb
                 )
             )
@@ -214,12 +224,36 @@ public sealed partial class CardSystem : SharedCardSystem
         if (!Appearance.TryGetData<CardListVisualState>(uid, CardVisuals.CardList, out var visualState, args.Component))
             visualState = new CardListVisualState(new List<CardData>(), 0, 0);
 
-        if (!TryComp<SpriteComponent>(uid, out var sprite) || !TryComp<CardsComponent>(uid, out var cards))
+        if (
+            !TryComp<SpriteComponent>(uid, out var sprite)
+            || !TryComp<CardsComponent>(uid, out var cards)
+            || !TryComp<StackComponent>(uid, out var stack)
+        )
             return;
 
         var count = visualState.Count;
         var radius = FanRadius(count);
+        _sprite.LayerMapReserve((uid, sprite), "base_2");
+        _sprite.LayerSetVisible((uid, sprite), "base_2", false);
+        var hiddenCount = component.Flipped
+            ? component.Cards.Count - (visualState.Start + visualState.Count)
+            : visualState.Start;
 
+        if (hiddenCount > 0)
+        {
+            var maxCount = _stacks.GetMaxCount(stack);
+            _stacks.ApplyLayerFunction((uid, stack), ref hiddenCount, ref maxCount);
+            _sprite.LayerSetVisible((uid, sprite), "base_2", true);
+            _counterSystem.ProcessOpaqueSprite(
+                uid,
+                "base_2",
+                hiddenCount,
+                maxCount,
+                stack.LayerStates,
+                false,
+                sprite: args.Sprite
+            );
+        }
         // Delete all layers which are not used here
         // Assumes that all layers will have the card before it have a layer
         // If it runs into a layer which doesn't exists it assumes no more later layers will exists
@@ -268,6 +302,11 @@ public sealed partial class CardSystem : SharedCardSystem
             // Moves the stack texture below the left most card
             if (i == 0)
                 TransformLayer("base", position, rotation, (uid, sprite));
+
+            if (i == count - 1)
+            {
+                TransformLayer("base_2", position, rotation, (uid, sprite));
+            }
         }
     }
 

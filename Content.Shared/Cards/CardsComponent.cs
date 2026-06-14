@@ -9,7 +9,7 @@ namespace Content.Shared.Cards;
 public sealed partial class CardsComponent : Component
 {
     // List of current cards in the deck
-    [DataField(required: true,customTypeSerializer: typeof(CardDataSerializer)), AutoNetworkedField]
+    [DataField(required: true, customTypeSerializer: typeof(CardDataSerializer)), AutoNetworkedField]
     public List<CardData> Cards = new();
 
     // Number of current cards in the deck
@@ -28,6 +28,9 @@ public sealed partial class CardsComponent : Component
     // If the deck is fanned
     [DataField, AutoNetworkedField]
     public bool Fanned;
+
+    [DataField, AutoNetworkedField]
+    public int AmountCycled = 0;
 
     // Max number of cards which will be shown while fanned
     // Big numbers will use a lot of sprite layers

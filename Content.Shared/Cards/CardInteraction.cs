@@ -66,10 +66,13 @@ public abstract partial class SharedCardSystem
             args.Verbs.Add(fanVerb);
 
         var priority = -200;
+
         if (ent.Comp.Flipped)
         {
-            foreach (var card in GetCardListVisualState(ent.Comp).CardList)
+            var visualState = GetCardListVisualState(ent.Comp);
+            for (var i = 0; i < visualState.Count; i++)
             {
+                var card = visualState.CardList[visualState.Start + i];
                 if (TryGetTakeCardVerb(ent, user, card.CardInx, priority--, out var takeVerb))
                     args.Verbs.Add(takeVerb);
             }
