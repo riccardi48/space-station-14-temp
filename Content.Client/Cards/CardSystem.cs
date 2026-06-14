@@ -25,9 +25,6 @@ public sealed partial class CardSystem : SharedCardSystem
     private SpriteSystem _sprite = default!;
 
     [Dependency]
-    private IPrototypeManager _prototypeManager = default!;
-
-    [Dependency]
     private IStateManager _stateManager = default!;
 
     public override void Initialize()
@@ -103,7 +100,7 @@ public sealed partial class CardSystem : SharedCardSystem
         List<CardData> selected
     )
     {
-        if (!_prototypeManager.TryIndex(newStackId, out var newStack))
+        if (!PrototypeManager.TryIndex(newStackId, out var newStack))
             return EntityUid.Invalid;
 
         var ent = Spawn(newStack.Spawn, mergeeCoords);
@@ -203,7 +200,7 @@ public sealed partial class CardSystem : SharedCardSystem
             var card = visualState.CardList[visualState.Start + i];
             var (baseLayer, layerOne, layerTwo) = CardLayers(i);
 
-            if (!_prototypeManager.TryIndex<CardPrototype>(card.CardId, out var prototype))
+            if (card.CardId.Id == null || !PrototypeManager.TryIndex<CardPrototype>(card.CardId, out var prototype))
                 continue;
 
             var (position, rotation) = GetCardPosRot(i, count, radius);

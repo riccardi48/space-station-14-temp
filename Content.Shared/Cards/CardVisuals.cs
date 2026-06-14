@@ -15,10 +15,10 @@ public abstract partial class SharedCardSystem
         SubscribeLocalEvent<CardsComponent, ExaminedEvent>(OnCardsExamined);
         SubscribeLocalEvent<CardsComponent, StackCountChangedEvent>(OnStackCountChanged);
     }
+
     private void OnCardsStarted(Entity<CardsComponent> ent, ref ComponentStartup args)
     {
         UpdateVisualState(ent);
-        UpdateStackCount(ent);
     }
 
     private void OnCardsExamined(Entity<CardsComponent> ent, ref ExaminedEvent args)
@@ -46,15 +46,13 @@ public abstract partial class SharedCardSystem
     {
         // If the deck is fanned it changes the visual count to what ever number is below the fanned cards
         // This means that a deck with the same number of cards as the MaxFanned will not have a stack extending of the cards
-        if (!ent.Comp.Fanned)
-            return;
-        var cardsCount = ent.Comp.Cards.Count;
-        var dummyCount = cardsCount >= ent.Comp.MaxFanned ? cardsCount - ent.Comp.MaxFanned + 1 : 1;
-        Appearance.SetData(ent.Owner, StackVisuals.Actual, dummyCount);
+        var visualState = GetCardListVisualState(ent.Comp);
+        Appearance.SetData(ent.Owner, StackVisuals.Actual, ent.Comp.Cards.Count - visualState.Count + 1);
     }
 
     private void UpdateVisualState(Entity<CardsComponent> ent)
     {
+        UpdateStackCount(ent);
         if (TryComp<AppearanceComponent>(ent, out var appearance))
         {
             Appearance.SetData(ent, CardVisuals.CardList, GetCardListVisualState(ent.Comp), appearance);
@@ -93,7 +91,9 @@ public abstract partial class SharedCardSystem
     {
         // Plays animation for a split or merge where the cards taken are from somewhere in the deck
         var card = GetCardFromInx(mergee.Comp.Cards, cardInx);
-        List<CardData> selected = new List<CardData> { card };
+        if (!card.HasValue)
+            return;
+        List<CardData> selected = new List<CardData> { card.Value };
         PlayCardAnimation(merger, mergee, selected, playOnUser: playOnUser);
     }
 
@@ -154,4 +154,3 @@ public sealed class CardListVisualState : ICloneable
 
     public object Clone() => new CardListVisualState(CardList, Start, Count);
 }
-

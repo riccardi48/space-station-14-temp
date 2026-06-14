@@ -37,8 +37,6 @@ public abstract partial class SharedCardSystem : EntitySystem
 
     [Dependency]
     protected IPrototypeManager PrototypeManager = default!;
-    private int _inxCounter = 0;
-
     public override void Initialize()
     {
         base.Initialize();
@@ -188,8 +186,6 @@ public abstract partial class SharedCardSystem : EntitySystem
     )
     {
         split = null;
-        if (!cards.Comp.Fanned)
-            return false;
         if (!Resolve(user.Owner, ref user.Comp, false) || !TryComp<StackComponent>(cards.Owner, out var stackComp))
             return false;
 
@@ -219,9 +215,19 @@ public abstract partial class SharedCardSystem : EntitySystem
 
         // Animation must be before cards are moved
         var card = GetCardFromInx(cards.Comp.Cards, cardInx);
-        PlayCardTakeAnimation((split.Value, newCardsComp), cards, cardInx);
-        MoveCards(newCardsComp, cards.Comp, new List<CardData> { card });
+        if (!card.HasValue)
+        {
+            if (!TryComp<StackComponent>(split, out var splitStack))
+                return false;
+            var count = splitStack.Count;
+            Stacks.SetCount((split.Value, splitStack), count - 1);
+            count = stackComp.Count;
+            Stacks.SetCount((cards.Owner, stackComp), count + 1);
+            return false;
+        }
 
+        PlayCardTakeAnimation((split.Value, newCardsComp), cards, cardInx);
+        MoveCards(newCardsComp, cards.Comp, new List<CardData> { card.Value });
         // If this is true it is a new deck so copies over the properties
         // Otherwise it doesn't change the deck the card joins
         if (newCardsComp.Cards.Count == 1)
@@ -242,8 +248,9 @@ public abstract partial class SharedCardSystem : EntitySystem
         return true;
     }
 
-    public CardData GetCardFromInx(List<CardData> cards, int cardInx)
+    public CardData? GetCardFromInx(List<CardData> cards, int cardInx)
     {
-        return cards.Find(c => c.CardInx == cardInx);
+        var card = cards.Find(c => c.CardInx == cardInx);
+        return card.CardId.Id == null ? null : card;
     }
 }
