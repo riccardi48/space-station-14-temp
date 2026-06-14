@@ -37,6 +37,7 @@ public abstract partial class SharedCardSystem : EntitySystem
 
     [Dependency]
     protected IPrototypeManager PrototypeManager = default!;
+
     public override void Initialize()
     {
         base.Initialize();
@@ -53,8 +54,13 @@ public abstract partial class SharedCardSystem : EntitySystem
         for (var i = 0; i < ent.Comp.Cards.Count; i++)
         {
             var card = ent.Comp.Cards[i];
-            card.BaseState = card.BaseState == string.Empty ? ent.Comp.BaseState : card.BaseState;
-            card.CardBack = card.CardBack == string.Empty ? ent.Comp.CardBack : card.CardBack;
+            if (
+                !card.BaseState.IsWhiteSpace()
+                || !PrototypeManager.TryIndex<CardPrototype>(card.CardId, out var prototype)
+            )
+                continue;
+            card.BaseState = prototype.BaseState == null ? ent.Comp.BaseState : prototype.BaseState;
+            card.CardBack = prototype.CardBack == null ? ent.Comp.CardBack : prototype.CardBack;
             ent.Comp.Cards[i] = card;
         }
     }
