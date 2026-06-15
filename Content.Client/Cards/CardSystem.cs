@@ -199,7 +199,7 @@ public sealed partial class CardSystem : SharedCardSystem
         return (position, rotation);
     }
 
-    // Radius is 0 when one card so individual cards can't be fanned
+    // Layer names for each card
     private static (string Base, string LayerOne, string LayerTwo) CardLayers(int i) =>
         ($"card_{i}_base", $"card_{i}_layerOne", $"card_{i}_layerTwo");
 
@@ -224,6 +224,7 @@ public sealed partial class CardSystem : SharedCardSystem
         var radius = FanRadius(count);
         _sprite.LayerMapReserve((uid, sprite), "base_2");
         _sprite.LayerSetVisible((uid, sprite), "base_2", false);
+        // amount of cards in the right stack when fanned
         var hiddenCount = component.Flipped
             ? component.Cards.Count - (visualState.Start + visualState.Count)
             : visualState.Start;
@@ -293,9 +294,7 @@ public sealed partial class CardSystem : SharedCardSystem
                 TransformLayer("base", position, rotation, (uid, sprite));
 
             if (i == count - 1)
-            {
                 TransformLayer("base_2", position, rotation, (uid, sprite));
-            }
         }
     }
 
