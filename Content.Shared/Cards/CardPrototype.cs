@@ -8,21 +8,21 @@ public sealed partial class CardPrototype : IPrototype
     [IdDataField]
     public string ID { get; private set; } = string.Empty;
 
-    [DataField("layerOneState")]
+    [DataField]
     public string? LayerOneState { get; private set; }
 
-    [DataField("layerOneColor")]
+    [DataField]
     public Color? LayerOneColor { get; private set; }
 
-    [DataField("layerTwoState")]
+    [DataField]
     public string? LayerTwoState { get; private set; }
 
-    [DataField("layerTwoColor")]
+    [DataField]
     public Color? LayerTwoColor { get; private set; }
 
-    [DataField("layerBaseState")]
-    public string? LayerBaseState { get; private set; }
+    [DataField]
+    public string? BaseState { get; private set; }
 
-    [DataField("layerBaseColor")]
-    public Color? LayerBaseColor { get; private set; }
+    [DataField]
+    public string? CardBack { get; private set; }
 }

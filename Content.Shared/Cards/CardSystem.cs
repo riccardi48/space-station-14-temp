@@ -60,17 +60,22 @@ public abstract partial class SharedCardSystem : EntitySystem
         for (var i = 0; i < ent.Comp.Cards.Count; i++)
         {
             var card = ent.Comp.Cards[i];
-            card.BaseState = card.BaseState == string.Empty ? ent.Comp.BaseState : card.BaseState;
-            card.CardBack = card.CardBack == string.Empty ? ent.Comp.CardBack : card.CardBack;
+            if (
+                !card.BaseState.IsWhiteSpace()
+                || !PrototypeManager.TryIndex<CardPrototype>(card.CardId, out var prototype)
+            )
+                continue;
+            card.BaseState = prototype.BaseState == null ? ent.Comp.BaseState : prototype.BaseState;
+            card.CardBack = prototype.CardBack == null ? ent.Comp.CardBack : prototype.CardBack;
             ent.Comp.Cards[i] = card;
         }
     }
 
     private void OnMergeEvent(Entity<CardsComponent> ent, ref MergeEvent args)
     {
-        // If BeingCherryPicked the merging is sorted elsewhere
         if (!TryComp<CardsComponent>(args.Mergee, out var mergeeComp))
             return;
+        // If BeingCherryPicked the merging is sorted elsewhere
         if (ent.Comp.BeingCherryPicked || mergeeComp.BeingCherryPicked)
             return;
 
@@ -155,12 +160,14 @@ public abstract partial class SharedCardSystem : EntitySystem
             return comp.Cards.TakeLast(delta).ToList();
         return comp.Cards.Take(delta).ToList();
     }
+
     private void HandleShuffleCardsEvent(ShuffleCardsEvent args)
     {
         var cards = GetEntity(args.Cards);
         if (TryComp<CardsComponent>(cards, out var comp))
             TryShuffleCards((cards, comp));
     }
+
     public bool TryShuffleCards(Entity<CardsComponent> cards)
     {
         // Shuffles cards
@@ -172,6 +179,7 @@ public abstract partial class SharedCardSystem : EntitySystem
         Dirty(cards.Owner, cards.Comp);
         return true;
     }
+
     private void HandleFlipCardsEvent(FlipCardsEvent args)
     {
         var cards = GetEntity(args.Cards);

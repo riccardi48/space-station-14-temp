@@ -307,7 +307,7 @@ public sealed partial class CardSystem : SharedCardSystem
         Entity<SpriteComponent?> sprite
     )
     {
-        BuildLayer(baseLayer, prototype.LayerBaseState ?? baseSprite, prototype.LayerBaseColor, sprite);
+        BuildLayer(baseLayer, baseSprite, null, sprite);
         BuildLayer(layerOne, prototype.LayerOneState, prototype.LayerOneColor, sprite);
         BuildLayer(layerTwo, prototype.LayerTwoState, prototype.LayerTwoColor, sprite);
     }
