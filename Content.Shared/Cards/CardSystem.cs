@@ -260,6 +260,8 @@ public abstract partial class SharedCardSystem : EntitySystem
         var card = GetCardFromInx(cards.Comp.Cards, cardInx);
         if (!card.HasValue)
         {
+            if (!Exists(cards.Owner))
+                return false;
             if (!TryComp<StackComponent>(split, out var splitStack))
                 return false;
             var count = splitStack.Count;
