@@ -1,9 +1,8 @@
 using Content.IntegrationTests.Fixtures;
 using Content.Shared.Humanoid.Prototypes;
 
-namespace Content.IntegrationTests.Dwarf;
+namespace Content.IntegrationTests.Tests;
 
-[TestFixture]
 public sealed class DwarfTest : GameTest
 {
     private const string Dwarf = "Dwarf";
