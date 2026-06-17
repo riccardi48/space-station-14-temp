@@ -1,16 +1,7 @@
-using System.Linq;
-using System.Numerics;
 using Content.IntegrationTests.Fixtures;
-using Content.IntegrationTests.Fixtures.Attributes;
-using Content.IntegrationTests.Tests.Interaction;
-using Content.Server.Hands.Systems;
 using Content.Shared.Cards;
-using Content.Shared.Hands.Components;
 using Content.Shared.Stacks;
-using Robust.Server.GameObjects;
 using Robust.Shared.GameObjects;
-using Robust.Shared.Map;
-using Robust.Shared.Maths;
 
 namespace Content.IntegrationTests.Cards;
 

@@ -1,17 +1,10 @@
 using System.Linq;
 using System.Numerics;
-using Content.IntegrationTests.Fixtures;
 using Content.IntegrationTests.Fixtures.Attributes;
-using Content.IntegrationTests.Tests.Interaction;
-using Content.Server.Hands.Systems;
 using Content.Shared.Cards;
-using Content.Shared.Hands.Components;
 using Content.Shared.Stacks;
-using Robust.Server.GameObjects;
 using Robust.Shared.GameObjects;
 using Robust.Shared.Map;
-using Robust.Shared.Maths;
-using Robust.Shared.Prototypes;
 
 namespace Content.IntegrationTests.Cards;
 
@@ -24,14 +17,9 @@ public sealed partial class CardsTest
     private readonly SharedStackSystem _sStacks = null!;
 
     [SidedDependency(Side.Server)]
-    private readonly HandsSystem _sHands = null!;
-
-    [SidedDependency(Side.Server)]
     private readonly IComponentFactory _sCompFact = null!;
 
     private const string CardsProtoId = "cardDeck";
-
-    private const string BaseCardsProtoId = "BaseCards";
 
     /// <summary>
     /// Helper to spawn a card deck.
@@ -228,10 +216,14 @@ public sealed partial class CardsTest
                     Assert.Fail();
 
                 if (!baseCard.TryGetComponent<CardsComponent>(out var baseCardComp, _sCompFact))
-                    Assert.Fail($"{baseCard.ID} the spawn of {stackType} which is the stack of {proto.ID} requires a {nameof(StackComponent)}");
+                    Assert.Fail(
+                        $"{baseCard.ID} the spawn of {stackType} which is the stack of {proto.ID} requires a {nameof(StackComponent)}"
+                    );
 
                 if (!baseCard.TryGetComponent<StackComponent>(out var baseStackComp, _sCompFact))
-                    Assert.Fail($"{baseCard.ID} the spawn of {stackType} which is the stack of {proto.ID} requires a {nameof(StackComponent)}");
+                    Assert.Fail(
+                        $"{baseCard.ID} the spawn of {stackType} which is the stack of {proto.ID} requires a {nameof(StackComponent)}"
+                    );
 
                 Assert.That(baseCardComp.Cards.Count, Is.EqualTo(0));
                 Assert.That(baseStackComp.Count, Is.EqualTo(1));
