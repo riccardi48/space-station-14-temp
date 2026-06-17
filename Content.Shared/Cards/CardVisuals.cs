@@ -141,9 +141,9 @@ public enum CardVisuals : byte
 [Serializable, NetSerializable]
 public sealed class CardListVisualState : ICloneable
 {
-    public readonly List<CardData> CardList;
-    public readonly int Start;
-    public readonly int Count;
+    public List<CardData> CardList;
+    public int Start;
+    public int Count;
 
     public CardListVisualState(List<CardData> cardList, int start, int count)
     {

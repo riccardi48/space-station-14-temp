@@ -5,10 +5,12 @@ using Content.Client.Stack;
 using Content.Client.Storage.Systems;
 using Content.Shared.Cards;
 using Content.Shared.Interaction.Events;
+using Content.Shared.Mobs.Components;
 using Content.Shared.Stacks;
 using Content.Shared.Storage.EntitySystems;
 using JetBrains.Annotations;
 using Robust.Client.GameObjects;
+using Robust.Client.Player;
 using Robust.Client.State;
 using Robust.Shared.Map;
 using Robust.Shared.Prototypes;
@@ -34,6 +36,9 @@ public sealed partial class CardSystem : SharedCardSystem
 
     [Dependency]
     private ItemCounterSystem _counterSystem = default!;
+
+    [Dependency]
+    private IPlayerManager _playerManager = default!;
 
     public override void Initialize()
     {
@@ -187,17 +192,26 @@ public sealed partial class CardSystem : SharedCardSystem
             !TryComp<SpriteComponent>(uid, out var sprite)
             || !TryComp<CardsComponent>(uid, out var cards)
             || !TryComp<StackComponent>(uid, out var stack)
+            || !TryComp<TransformComponent>(uid, out var xform)
         )
             return;
+
+        if (
+            HasComp<MobStateComponent>(xform.ParentUid)
+            && xform.ParentUid != _playerManager.LocalSession?.AttachedEntity
+        )
+        {
+            if (flipped)
+                visualState.Start = 0;
+            flipped = false;
+        }
 
         var count = visualState.Count;
         var radius = FanRadius(count);
         _sprite.LayerMapReserve((uid, sprite), "base_2");
         _sprite.LayerSetVisible((uid, sprite), "base_2", false);
         // amount of cards in the right stack when fanned
-        var hiddenCount = component.Flipped
-            ? component.Cards.Count - (visualState.Start + visualState.Count)
-            : visualState.Start;
+        var hiddenCount = flipped ? component.Cards.Count - (visualState.Start + visualState.Count) : visualState.Start;
 
         if (hiddenCount > 0)
         {
