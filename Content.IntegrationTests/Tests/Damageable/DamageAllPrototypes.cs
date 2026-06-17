@@ -18,7 +18,7 @@ public sealed class DamageAllPrototypesTest : GameTest
     [Test]
     [TestOf(typeof(DamageableSystem))]
     [Description("Ensures all Entity Prototypes with damageable can be damaged.")]
-    public async Task TestDamageableComponents()
+    public async Task TestDamageableComponentsOnPrototypes()
     {
         await Pair.CreateTestMap();
         var coords = Pair.TestMap!.GridCoords;
