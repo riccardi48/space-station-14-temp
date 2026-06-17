@@ -5,6 +5,8 @@ using Content.Shared.Damage.Components;
 using Content.Shared.Damage.Prototypes;
 using Content.Shared.Damage.Systems;
 using Content.Shared.FixedPoint;
+using Content.Shared.Prototypes;
+using Robust.Shared.GameObjects;
 
 namespace Content.IntegrationTests.Tests.Damageable;
 
@@ -15,6 +17,9 @@ public sealed class DamageAllPrototypesTest : GameTest
     [SidedDependency(Side.Server)]
     private readonly DamageableSystem _damageableSystem = default!;
 
+    [SidedDependency(Side.Server)]
+    private readonly IComponentFactory _sComp = default!;
+
     [Test]
     [TestOf(typeof(DamageableSystem))]
     [Description("Ensures all Entity Prototypes with damageable can be damaged.")]
@@ -24,17 +29,19 @@ public sealed class DamageAllPrototypesTest : GameTest
         var coords = Pair.TestMap!.GridCoords;
         var protoIds = Pair.GetPrototypesWithComponent<DamageableComponent>();
 
+        var damageTypes = SProtoMan.EnumeratePrototypes<DamageTypePrototype>();
+
         foreach (var (damageable, comp) in protoIds)
         {
-            var entity = await SpawnAtPosition(damageable.ID, coords);
-
             // Intentionally cannot take damage, ignore it.
-            if (SEntMan.HasComponent<GodmodeComponent>(entity))
+            if (damageable.HasComponent<GodmodeComponent>(_sComp))
                 return;
+
+            var entity = await SpawnAtPosition(damageable.ID, coords);
 
             var canBeDamaged = false;
 
-            foreach (var type in SProtoMan.EnumeratePrototypes<DamageTypePrototype>())
+            foreach (var type in damageTypes)
             {
                 if (!_damageableSystem.CanBeDamagedBy(entity, type))
                     continue;
