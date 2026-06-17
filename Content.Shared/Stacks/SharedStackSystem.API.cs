@@ -68,8 +68,6 @@ public abstract partial class SharedStackSystem
         if (amount > 0)
             transferred = Math.Min(transferred, amount.Value);
 
-        // passing amount as a hack to get around split logic only being server side
-        // if amount is not null this was called during a split stack action
         var mergeEvent = new MergeEvent(recipient, donor, transferred);
         RaiseLocalEvent(recipient, ref mergeEvent, true);
 
