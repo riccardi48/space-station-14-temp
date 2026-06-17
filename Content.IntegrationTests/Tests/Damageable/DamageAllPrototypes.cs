@@ -12,6 +12,7 @@ using Robust.Shared.Map;
 
 namespace Content.IntegrationTests.Tests.Damageable;
 
+
 [TestFixture]
 [TestOf(typeof(DamageableComponent))]
 [TestOf(typeof(DamageableSystem))]
