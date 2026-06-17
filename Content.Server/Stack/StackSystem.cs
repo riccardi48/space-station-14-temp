@@ -278,6 +278,5 @@ namespace Content.Server.Stack
         }
 
         #endregion
-        #endregion
     }
 }
