@@ -142,7 +142,7 @@ public sealed partial class CardSystem : SharedCardSystem
         if (!PrototypeManager.TryIndex(newStackId, out var newStack))
             return EntityUid.Invalid;
 
-        var ent = Spawn(newStack.Spawn, mergeeCoords);
+        var ent = Spawn(newStack.Spawn, TransformSystem.ToMapCoordinates(mergeeCoords));
 
         if (
             !TryComp<CardsComponent>(ent, out var cardsComp)
