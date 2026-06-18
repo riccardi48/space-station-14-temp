@@ -74,8 +74,10 @@ public sealed partial class CardSystem : SharedCardSystem
         };
     }
 
-    private void OnCardsDropped(Entity<CardsComponent> ent, ref DroppedEvent args)
+    protected override void OnCardsDropped(Entity<CardsComponent> ent, ref DroppedEvent args)
     {
+        base.OnCardsDropped(ent, ref args);
+
         if (_stateManager.CurrentState is not GameplayStateBase screen)
             return;
 
@@ -178,20 +180,43 @@ public sealed partial class CardSystem : SharedCardSystem
         return ent;
     }
 
-    // Position of cards in fan
-    // Semi-circle shifted down to centre it
+    /// <summary>
+    /// Calculates the local position of a card on a fanned arc, given its angle from center.
+    /// </summary>
+    /// <param name="angle">The angle of the card along the fan, in radians, where 0 is centered.</param>
+    /// <param name="radius">The radius of the fan's arc.</param>
+    /// <returns>The local position offset for the card.</returns>
     public static Vector2 FanPosition(double angle, float radius) =>
         new((float)Math.Sin(angle) * radius, (float)Math.Cos(angle) * radius - radius * (3f / 4f));
 
-    // Radius is 0 when one card so individual cards can't be fanned
+    /// <summary>
+    /// Calculates the radius of the fan arc based on the number of cards.
+    /// </summary>
+    /// <param name="count">The total number of cards in the fan.</param>
+    /// <returns>The fan radius, or 0 if there is only one card, since a single card cannot be fanned.</returns>
     public static float FanRadius(int count) => count <= 1 ? 0f : (float)Math.Sqrt(count / 20f);
 
+    /// <summary>
+    /// Calculates the position and rotation of a card at a given index within a fanned hand,
+    /// arranging cards in a semi-circle from left to right.
+    /// </summary>
+    /// <param name="inx">The zero-based index of the card within the hand.</param>
+    /// <param name="count">The total number of cards in the hand.</param>
+    /// <returns>A tuple containing the card's local position and rotation.</returns>
     public static (Vector2, Angle) GetCardPosRot(int inx, int count)
     {
         var radius = FanRadius(count);
         return GetCardPosRot(inx, count, radius);
     }
 
+    /// <summary>
+    /// Calculates the position and rotation of a card at a given index within a fanned hand,
+    /// arranging cards in a semi-circle from left to right.
+    /// </summary>
+    /// <param name="inx">The zero-based index of the card within the hand.</param>
+    /// <param name="count">The total number of cards in the hand.</param>
+    /// <param name="radius">The radius of the fan's arc.</param>
+    /// <returns>A tuple containing the card's local position and rotation.</returns>
     public static (Vector2, Angle) GetCardPosRot(int inx, int count, float radius)
     {
         // Semi-circle from left to right
@@ -309,7 +334,7 @@ public sealed partial class CardSystem : SharedCardSystem
         }
     }
 
-    public void BuildCard(
+    private void BuildCard(
         CardPrototype prototype,
         string baseLayer,
         string baseSprite,
@@ -323,7 +348,7 @@ public sealed partial class CardSystem : SharedCardSystem
         BuildLayer(layerTwo, prototype.LayerTwoState, prototype.LayerTwoColor, sprite);
     }
 
-    public void BuildLayer(string layer, string? layerState, Color? layerColor, Entity<SpriteComponent?> sprite)
+    private void BuildLayer(string layer, string? layerState, Color? layerColor, Entity<SpriteComponent?> sprite)
     {
         _sprite.LayerSetVisible(sprite, layer, true);
         _sprite.LayerSetRsiState(sprite, layer, layerState);
@@ -331,7 +356,7 @@ public sealed partial class CardSystem : SharedCardSystem
             _sprite.LayerSetColor(sprite, layer, layerColor.Value);
     }
 
-    public void TransformLayer(string layer, Vector2 movement, Angle rotation, Entity<SpriteComponent?> sprite)
+    private void TransformLayer(string layer, Vector2 movement, Angle rotation, Entity<SpriteComponent?> sprite)
     {
         _sprite.LayerSetOffset(sprite, layer, movement);
         _sprite.LayerSetRotation(sprite, layer, rotation);
