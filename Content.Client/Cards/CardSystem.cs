@@ -53,7 +53,6 @@ public sealed partial class CardSystem : SharedCardSystem
 
         SubscribeLocalEvent<CardsComponent, AppearanceChangeEvent>(OnAppearanceChanged);
         SubscribeNetworkEvent<CardAnimationEvent>(HandleCardAnimation);
-        SubscribeLocalEvent<CardsComponent, DroppedEvent>(OnCardsDropped);
         OnCardButtonClicked += args =>
         {
             RaisePredictiveEvent(
