@@ -172,11 +172,15 @@ public abstract partial class SharedCardSystem : EntitySystem
             TryShuffleCards((cards, comp));
     }
 
+    /// <summary>
+    /// Attempts to shuffle the cards within the given <see cref="CardsComponent"/> into a random order.
+    /// </summary>
+    /// <param name="cards">The card stack entity to shuffle.</param>
+    /// <returns><c>true</c> if the cards were shuffled. Currently always returns <c>true</c>.</returns>
+    // Currently mis-predicted
+    // TODO: FIX this mis-predict and replace with a proper animation
     public bool TryShuffleCards(Entity<CardsComponent> cards)
     {
-        // Shuffles cards
-        // Currently mis-predicted
-        // TODO: FIX this mis-predict and replace with a proper animation
         cards.Comp.Cards = cards.Comp.Cards.Shuffle().ToList();
         UpdateVisualState(cards);
         Audio.PlayPredicted(cards.Comp.ShuffleSound, cards, null);
@@ -191,6 +195,11 @@ public abstract partial class SharedCardSystem : EntitySystem
             TryFlipCards((cards, comp));
     }
 
+    /// <summary>
+    /// Attempts to flip the given card stack, toggling which side is face-up.
+    /// </summary>
+    /// <param name="cards">The card stack entity to flip.</param>
+    /// <returns><c>true</c> if the cards were flipped. Currently always returns <c>true</c>.</returns>
     public bool TryFlipCards(Entity<CardsComponent> cards)
     {
         cards.Comp.Flipped = !cards.Comp.Flipped;
@@ -206,6 +215,12 @@ public abstract partial class SharedCardSystem : EntitySystem
             TryFanCards((cards, comp));
     }
 
+    /// <summary>
+    /// Attempts to toggle whether the given card stack is displayed fanned out.
+    /// Resets the cycled amount when un-fanning.
+    /// </summary>
+    /// <param name="cards">The card stack entity to fan or unfan.</param>
+    /// <returns><c>true</c> if the fan state was toggled. Currently always returns <c>true</c>.</returns>
     public bool TryFanCards(Entity<CardsComponent> cards)
     {
         cards.Comp.Fanned = !cards.Comp.Fanned;
@@ -225,6 +240,18 @@ public abstract partial class SharedCardSystem : EntitySystem
             TryTakeCard((cards, comp), (user, transComp), args.CardInx, out _);
     }
 
+    /// <summary>
+    /// Attempts to take a specific card from a fanned stack and move it into the user's active hand,
+    /// splitting the stack as needed.
+    /// </summary>
+    /// <param name="cards">The card stack entity to take a card from.</param>
+    /// <param name="user">The entity attempting to take the card.</param>
+    /// <param name="cardInx">The index of the specific card being taken from the stack.</param>
+    /// <param name="split">
+    /// When this method returns, contains the entity that the split-off card(s) ended up on,
+    /// or <c>null</c> if no split occurred or the operation failed.
+    /// </param>
+    /// <returns><c>true</c> if the card was successfully taken; otherwise <c>false</c>.</returns>
     public bool TryTakeCard(
         Entity<CardsComponent> cards,
         Entity<TransformComponent?> user,
@@ -305,6 +332,13 @@ public abstract partial class SharedCardSystem : EntitySystem
             TryCycleCards((cards, comp), args.Amount);
     }
 
+    /// <summary>
+    /// Attempts to cycle the visible window of a fanned card stack by the given amount,
+    /// clamped to the valid range of card indices.
+    /// </summary>
+    /// <param name="cards">The card stack entity to cycle.</param>
+    /// <param name="amount">The amount to adjust the cycled offset by; can be negative.</param>
+    /// <returns><c>true</c> if the cards were cycled; <c>false</c> if the stack is not currently fanned.</returns>
     public bool TryCycleCards(Entity<CardsComponent> cards, int amount)
     {
         if (!cards.Comp.Fanned)
@@ -319,6 +353,12 @@ public abstract partial class SharedCardSystem : EntitySystem
         return true;
     }
 
+    /// <summary>
+    /// Finds the <see cref="CardData"/> in the given list whose card index matches the specified value.
+    /// </summary>
+    /// <param name="cards">The list of cards to search.</param>
+    /// <param name="cardInx">The card index to search for.</param>
+    /// <returns>The matching <see cref="CardData"/>, or <c>null</c> if no card with that index exists.</returns>
     public CardData? GetCardFromInx(List<CardData> cards, int cardInx)
     {
         var card = cards.Find(c => c.CardInx == cardInx);

@@ -44,11 +44,20 @@ public abstract partial class SharedCardSystem
         }
     }
 
+    /// <summary>
+    /// Builds the <see cref="CardListVisualState"/> describing which cards in the stack are currently
+    /// visible to the player and should be rendered, based on whether the stack is fanned or flipped.
+    /// </summary>
+    /// <remarks>
+    /// This determines what the client renders for the card sprite:
+    /// if not fanned, only the top card is shown; if fanned, up to <see cref="CardsComponent.MaxFanned"/>
+    /// cards are shown. If the stack is flipped, the visible window is taken from the end of the list
+    /// instead of the start.
+    /// </remarks>
+    /// <param name="cards">The card stack component to compute the visual state for.</param>
+    /// <returns>A <see cref="CardListVisualState"/> describing the visible slice of cards.</returns>
     public CardListVisualState GetCardListVisualState(CardsComponent cards)
     {
-        // This gets the cards the player could see
-        // This function controls a lot of the client side sprite
-        // Very important this is correct
         var count = Math.Min(cards.Fanned ? cards.MaxFanned : 1, cards.Cards.Count);
         var start = cards.Flipped ? cards.Cards.Count - count : 0;
         return new CardListVisualState(cards.Cards, start, count);
