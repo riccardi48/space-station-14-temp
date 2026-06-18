@@ -211,7 +211,9 @@ namespace Content.Server.Cargo.Systems
                 return;
             }
 
-            if (!_emag.CheckFlag(uid, EmagType.Interaction))
+            var emagged = _emag.CheckFlag(uid, EmagType.Interaction);
+
+            if (!emagged)
             {
                 order.SetApproverData(_identity.GetIdentityShortInfo(player, uid));
             }
@@ -236,7 +238,7 @@ namespace Content.Server.Cargo.Systems
             order.Approved = true;
             _audio.PlayPvs(ApproveSound, uid);
 
-            if (!_emag.CheckFlag(uid, EmagType.Interaction))
+            if (!emagged)
             {
                 var message = Loc.GetString("cargo-console-unlock-approved-order-broadcast",
                     ("productName", Loc.GetString(product.Name)),
