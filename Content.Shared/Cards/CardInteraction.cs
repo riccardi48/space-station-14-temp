@@ -5,6 +5,7 @@ using Content.Shared.Interaction;
 using Content.Shared.Interaction.Events;
 using Content.Shared.Random.Helpers;
 using Content.Shared.Verbs;
+using Robust.Shared.Random;
 
 namespace Content.Shared.Cards;
 
@@ -144,7 +145,7 @@ public abstract partial class SharedCardSystem
                 new AlternativeVerb
                 {
                     Text = Loc.GetString("comp-cards-random-card"),
-                    Act = () => TryTakeCard(ent, user, randomIndex, out _),
+                    Act = () => TryTakeCard(ent, user, ent.Comp.Cards[randomIndex].CardInx, out _),
                     Priority = -200,
                 }
             );
