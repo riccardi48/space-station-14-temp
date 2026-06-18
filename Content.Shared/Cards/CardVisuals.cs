@@ -1,5 +1,3 @@
-using System.Linq;
-using Content.Shared.Examine;
 using Content.Shared.Stacks;
 using Robust.Shared.Map;
 using Robust.Shared.Prototypes;
@@ -12,26 +10,12 @@ public abstract partial class SharedCardSystem
     private void InitializeVisuals()
     {
         SubscribeLocalEvent<CardsComponent, ComponentStartup>(OnCardsStarted);
-        SubscribeLocalEvent<CardsComponent, ExaminedEvent>(OnCardsExamined);
         SubscribeLocalEvent<CardsComponent, StackCountChangedEvent>(OnStackCountChanged);
     }
 
     private void OnCardsStarted(Entity<CardsComponent> ent, ref ComponentStartup args)
     {
         UpdateVisualState(ent);
-    }
-
-    private void OnCardsExamined(Entity<CardsComponent> ent, ref ExaminedEvent args)
-    {
-        // Can only see top card if the deck is flipped
-        if (!args.IsInDetailsRange || !ent.Comp.Flipped)
-            return;
-
-        var cards = GetCardListVisualState(ent.Comp);
-        var cardName = (string)cards.CardList.Last().CardId;
-        args.PushMarkup(
-            Loc.GetString("comp-cards-examine-detail", ("card", Loc.GetString(cardName.Replace('_', '-'))))
-        );
     }
 
     private void OnStackCountChanged(Entity<CardsComponent> ent, ref StackCountChangedEvent args)

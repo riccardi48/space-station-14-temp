@@ -46,11 +46,12 @@ public sealed partial class CardSystem : SharedCardSystem
 
         SubscribeLocalEvent<CardsComponent, AppearanceChangeEvent>(OnAppearanceChanged);
         SubscribeNetworkEvent<CardAnimationEvent>(HandleCardAnimation);
-        SubscribeLocalEvent<CardsComponent, DroppedEvent>(OnCardsDropped);
     }
 
-    private void OnCardsDropped(Entity<CardsComponent> ent, ref DroppedEvent args)
+    protected override void OnCardsDropped(Entity<CardsComponent> ent, ref DroppedEvent args)
     {
+        base.OnCardsDropped(ent, ref args);
+
         if (_stateManager.CurrentState is not GameplayStateBase screen)
             return;
 
@@ -282,7 +283,7 @@ public sealed partial class CardSystem : SharedCardSystem
         }
     }
 
-    public void BuildCard(
+    private void BuildCard(
         CardPrototype prototype,
         string baseLayer,
         string baseSprite,
@@ -296,7 +297,7 @@ public sealed partial class CardSystem : SharedCardSystem
         BuildLayer(layerTwo, prototype.LayerTwoState, prototype.LayerTwoColor, sprite);
     }
 
-    public void BuildLayer(string layer, string? layerState, Color? layerColor, Entity<SpriteComponent?> sprite)
+    private void BuildLayer(string layer, string? layerState, Color? layerColor, Entity<SpriteComponent?> sprite)
     {
         _sprite.LayerSetVisible(sprite, layer, true);
         _sprite.LayerSetRsiState(sprite, layer, layerState);
@@ -304,7 +305,7 @@ public sealed partial class CardSystem : SharedCardSystem
             _sprite.LayerSetColor(sprite, layer, layerColor.Value);
     }
 
-    public void TransformLayer(string layer, Vector2 movement, Angle rotation, Entity<SpriteComponent?> sprite)
+    private void TransformLayer(string layer, Vector2 movement, Angle rotation, Entity<SpriteComponent?> sprite)
     {
         _sprite.LayerSetOffset(sprite, layer, movement);
         _sprite.LayerSetRotation(sprite, layer, rotation);

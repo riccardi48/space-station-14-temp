@@ -1,10 +1,10 @@
 using System.Linq;
-using Content.Shared.Examine;
 using Content.Shared.Hands.EntitySystems;
 using Content.Shared.Popups;
 using Content.Shared.Stacks;
 using Robust.Shared.Audio.Systems;
 using Robust.Shared.Containers;
+using Robust.Shared.Player;
 using Robust.Shared.Prototypes;
 using Robust.Shared.Timing;
 
@@ -38,6 +38,9 @@ public abstract partial class SharedCardSystem : EntitySystem
 
     [Dependency]
     protected IPrototypeManager PrototypeManager = default!;
+
+    [Dependency]
+    protected ISharedPlayerManager PlayerManager = default!;
 
     public override void Initialize()
     {
@@ -124,6 +127,7 @@ public abstract partial class SharedCardSystem : EntitySystem
 
     private void OnCardsContainerInserted(Entity<CardsComponent> ent, ref EntGotInsertedIntoContainerMessage args)
     {
+        UpdateVisualState(ent);
         // Unfans cards put inside containers except hands
         if (ent.Comp.Fanned && !Hands.EnumerateHands(args.Container.Owner).Contains(args.Container.ID))
             TryFanCards(ent);
