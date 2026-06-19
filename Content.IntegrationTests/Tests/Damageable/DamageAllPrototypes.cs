@@ -7,6 +7,7 @@ using Content.Shared.Damage.Systems;
 using Content.Shared.FixedPoint;
 using Content.Shared.Prototypes;
 using Robust.Shared.GameObjects;
+using Robust.Shared.Prototypes;
 
 namespace Content.IntegrationTests.Tests.Damageable;
 
@@ -53,12 +54,20 @@ public sealed class DamageAllPrototypesTest : GameTest
                     var damage = new DamageSpecifier(type, FixedPoint2.Epsilon);
                     var previousDamage = _damageableSystem.GetTotalDamage(entity);
                     _damageableSystem.ChangeDamage(entity, damage, ignoreResistances: true);
-                    Assert.That(_damageableSystem.GetTotalDamage(entity) == FixedPoint2.Epsilon + previousDamage);
+                    Assert.That(
+                        _damageableSystem.GetTotalDamage(entity),
+                        Is.EqualTo(FixedPoint2.Epsilon + previousDamage),
+                        $"{nameof(EntityPrototype)} {damageable.ID} takes incorrect damage from {nameof(DamageTypePrototype)} {type.ID}"
+                    );
                     _damageableSystem.ClearAllDamage(entity);
                 });
             }
             // Ensure that this entity can actually be damaged.
-            Assert.That(canBeDamaged);
+            Assert.That(
+                canBeDamaged,
+                $"prototype {damageable.ID} has {nameof(DamageableComponent)} but can not take any types of damage"
+            );
+            SQueueDel(entity);
         }
     }
 }
