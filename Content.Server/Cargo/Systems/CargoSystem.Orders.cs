@@ -118,6 +118,11 @@ namespace Content.Server.Cargo.Systems
             if (_emag.CheckFlag(ent, EmagType.Interaction))
                 return;
 
+            // Add all markets on the station to the console
+            var station = _station.GetOwningStation(ent);
+            if (TryGetOrderDatabase(station, out var orderDatabase))
+                ent.Comp.AllowedGroups = ent.Comp.AllowedGroups.Concat(orderDatabase.Markets).Distinct().ToList();
+
             args.Handled = true;
         }
 
