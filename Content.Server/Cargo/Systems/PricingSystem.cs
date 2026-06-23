@@ -130,26 +130,6 @@ public sealed partial class PricingSystem : EntitySystem
         args.Price += entity.Comp.RandomPrice ?? 0;
     }
 
-    private double GetSolutionPrice(EntityUid entity)
-    {
-        var price = 0.0;
-
-        foreach (var (_, soln) in _solutionContainerSystem.EnumerateSolutions(entity))
-        {
-            var solution = soln.Comp.Solution;
-            foreach (var (reagent, quantity) in solution.Contents)
-            {
-                if (!_prototypeManager.TryIndex<ReagentPrototype>(reagent.Prototype, out var reagentProto))
-                    continue;
-
-                // TODO check ReagentData for price information?
-                price += (float) quantity * reagentProto.PricePerUnit;
-            }
-        }
-
-        return price;
-    }
-
     private double GetMaterialPrice(PhysicalCompositionComponent component)
     {
         double price = 0;
