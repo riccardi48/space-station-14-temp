@@ -118,11 +118,6 @@ namespace Content.Server.Cargo.Systems
             if (_emag.CheckFlag(ent, EmagType.Interaction))
                 return;
 
-            // Add all markets on the station to the console
-            var station = _station.GetOwningStation(ent);
-            if (TryGetOrderDatabase(station, out var orderDatabase))
-                ent.Comp.AllowedGroups = ent.Comp.AllowedGroups.Concat(orderDatabase.Markets).Distinct().ToList();
-
             args.Handled = true;
         }
 
@@ -700,7 +695,9 @@ namespace Content.Server.Cargo.Systems
             var products = new List<ProtoId<CargoProductPrototype>>();
 
             // Note that a market must be both on the station and on the console to be available.
-            var markets = ent.Comp.AllowedGroups.Intersect(db.Markets).ToList();
+            var markets = _emag.CheckFlag(ent, EmagType.Interaction)
+                ? _protoMan.EnumeratePrototypes<CargoMarketPrototype>().Select(p => p.ID).ToList()
+                : ent.Comp.AllowedGroups.Intersect(db.Markets).Select(p => p.ToString()).ToList();
             foreach (var product in _protoMan.EnumeratePrototypes<CargoProductPrototype>())
             {
                 if (!markets.Contains(product.Group))
