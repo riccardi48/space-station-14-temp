@@ -696,8 +696,11 @@ namespace Content.Server.Cargo.Systems
 
             // Note that a market must be both on the station and on the console to be available.
             var markets = _emag.CheckFlag(ent, EmagType.Interaction)
-                ? _protoMan.EnumeratePrototypes<CargoMarketPrototype>().Select(p => p.ID).ToList()
-                : ent.Comp.AllowedGroups.Intersect(db.Markets).Select(p => p.ToString()).ToList();
+                ? _protoMan
+                    .EnumeratePrototypes<CargoMarketPrototype>()
+                    .Select(p => (ProtoId<CargoMarketPrototype>)p.ID)
+                    .ToList()
+                : ent.Comp.AllowedGroups.Intersect(db.Markets).ToList();
             foreach (var product in _protoMan.EnumeratePrototypes<CargoProductPrototype>())
             {
                 if (!markets.Contains(product.Group))
