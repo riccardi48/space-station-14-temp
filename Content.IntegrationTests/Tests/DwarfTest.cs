@@ -13,7 +13,7 @@ public sealed class DwarfTest : GameTest
     {
         await Server.WaitAssertion(() =>
         {
-            if (!SProtoMan.TryIndex<SpeciesPrototype>(Dwarf, out var dwarfPrototype))
+            if (!SProtoMan.HasIndex<SpeciesPrototype>(Dwarf))
             {
                 Assert.Fail(
                     "DWARFS REMOVED!!! Freak the fuck out and panic sell everything right now. It's fucking over."
